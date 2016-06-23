@@ -1,0 +1,7 @@
+*~
+*.o
+*.os
+*.so
+example
+.sconsign.dblite
+.clang_complete
