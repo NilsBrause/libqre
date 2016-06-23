@@ -3,9 +3,9 @@
 
 int main()
 {
-  regexp r("bc");
+  regexp r("\\Q.*\\E");
   std::vector<std::string> result;
-  if(r.match("abcd"))
+  if(r.match(".*"))
     {
       std::cout << "pos: " << r.result.pos << std::endl;
       for(auto &sub : r.result.sub)

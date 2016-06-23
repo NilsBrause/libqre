@@ -110,18 +110,6 @@ bool regexp::test_t::check(const std::string &str, unsigned int &pos,
       return result;
       break;
 
-    case test_type::sequence:
-#ifdef DEBUG
-      std::cerr << "sequence: " << std::flush;
-      for(unsigned int c = 0; c < sequence.length(); c++)
-        std::cerr << sequence[c] << std::endl;
-#endif
-      for(unsigned int c = 0; c < sequence.length(); c++)
-        if(pos+c == str.length() || sequence[c] != str[pos+c])
-          return false;
-      pos += sequence.length();
-      return true;
-      break;
     default:
       throw std::runtime_error("unknowen test type.");
       return false;

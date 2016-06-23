@@ -81,7 +81,7 @@ private:
     };
 
     enum class test_type
-    { epsilon, any, bol, eol, newline, character, sequence };
+    { epsilon, any, bol, eol, newline, character };
 
     test_type type;
     bool neg = false;

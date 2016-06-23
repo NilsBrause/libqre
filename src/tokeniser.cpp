@@ -88,58 +88,6 @@ regexp::char_t regexp::read_escape(const std::string &str, unsigned int &pos)
   return ch;
 }
 
-regexp::test_t regexp::read_escape_sequence(const std::string &str, unsigned int &pos)
-{
-  test_t test;
-  try
-    {
-      test.chars.insert(read_escape(str, pos));
-      test.type = test_t::test_type::character;
-    }
-  catch(...)
-    {
-      unsigned int oldpos = pos;
-      assert(str[pos++] == '\\');
-      switch(str[pos++])
-        {
-        case '`':
-        case 'A':
-          test.type = test_t::test_type::bol;
-          break;
-        case 'N': // No Newline
-          test.type = test_t::test_type::newline;
-          test.neg = true;
-          break;
-        case 'Q': // Literal sequence
-          test.type = test_t::test_type::sequence;
-          while(true)
-            {
-              if(pos == str.size())
-                throw std::runtime_error("Unterminated escape sequence.");
-              if(str.substr(pos, 2) == "\\E")
-                {
-                  pos += 2;
-                  break;
-                }
-              else
-                test.sequence += str[pos++];
-            }
-          break;
-        case 'R': // New line
-          test.type = test_t::test_type::newline;
-          break;
-        case '\'':
-        case 'Z':
-          test.type = test_t::test_type::eol;
-          break;
-        default:
-          pos = oldpos;
-          throw std::runtime_error("Invalid escape sequence.");
-        }
-    }
-  return test;
-}
-
 regexp::test_t regexp::read_char_class(const std::string &str, unsigned int &pos)
 {
   assert(str[pos++] == '[');
@@ -274,9 +222,8 @@ std::list<regexp::symbol> regexp::tokeniser(const std::string &str)
   while(pos < str.length())
     {
       symbol sym;
-      switch(str[pos])
+      if(str[pos] == '(')
         {
-        case '(':
           sym.type = symbol::type_t::lparan;
           pos++;
           if(str[pos] == '?' && str[pos+1] == ':')
@@ -286,49 +233,58 @@ std::list<regexp::symbol> regexp::tokeniser(const std::string &str)
             }
           else
             sym.capture = true;
-          break;
-        case ')':
+        }
+      else if(str[pos] == ')')
+        {
           sym.type = symbol::type_t::rparan;
           pos++;
-          break;
-        case '|':
+        }
+      else if(str[pos] == '|')
+        {
           sym.type = symbol::type_t::alt;
           pos++;
-          break;
-        case '.':
+        }
+      else if(str[pos] == '.')
+        {
           sym.type = symbol::type_t::test;
           sym.test.type = test_t::test_type::any;
           pos++;
-          break;
-        case '?':
+        }
+     else  if(str[pos] == '?')
+        {
           sym.type = symbol::type_t::range;
           sym.range.begin = 0;
           sym.range.end = 1;
           pos++;
-          break;
-        case '*':
+        }
+      else if(str[pos] == '*')
+        {
           sym.type = symbol::type_t::range;
           sym.range.begin = 0;
           sym.range.infinite = true;
           pos++;
-          break;
-        case '+':
+        }
+      else if(str[pos] == '+')
+        {
           sym.type = symbol::type_t::range;
           sym.range.begin = 1;
           sym.range.infinite = true;
           pos++;
-          break;
-        case '^':
+        }
+      else if(str[pos] == '^')
+        {
           sym.type = symbol::type_t::test;
           sym.test.type = test_t::test_type::bol;
           pos++;
-          break;
-        case '$':
+        }
+      else if(str[pos] == '$')
+        {
           sym.type = symbol::type_t::test;
           sym.test.type = test_t::test_type::eol;
           pos++;
-          break;
-        case '{':
+        }
+      else if(str[pos] == '{')
+        {
           if(read_range(str, pos, sym.range))
             sym.type = symbol::type_t::range;
           else
@@ -338,28 +294,75 @@ std::list<regexp::symbol> regexp::tokeniser(const std::string &str)
               sym.test.chars.insert(str[pos]);
               pos++;
             }
-          break;
-        case '[':
+        }
+      else if(str[pos] == '[')
+        {
           sym.type = symbol::type_t::test;
           sym.test = read_char_class(str, pos);
           break;
-        case '\\':
-          sym.type = symbol::type_t::test;
-          sym.test = read_escape_sequence(str, pos);
-          break;
-        case ']':
-          throw std::runtime_error("mispaceed ']'");
-          break;
-        case '}':
-          // literal '}' if not part of a range expression.
-        default:
+        }
+      else if(str[pos] == ']')
+        throw std::runtime_error("mispaceed paranthesis");
+      else if(str[pos] == '\\')
+          {
+            unsigned int oldpos = pos;
+            assert(str[pos++] == '\\');
+            switch(str[pos++])
+              {
+              case '`':
+              case 'A':
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::bol;
+                break;
+              case 'N': // No Newline
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::newline;
+                sym.test.neg = true;
+                break;
+              case 'Q': // Literal sequence
+                while(true)
+                  {
+                    if(pos == str.size())
+                      throw std::runtime_error("Unterminated escape sequence.");
+                    if(str.substr(pos, 2) == "\\E")
+                      {
+                        pos += 2;
+                        break;
+                      }
+                    else
+                      {
+                        symbol sym2;
+                        sym2.type = symbol::type_t::test;
+                        sym2.test.type = test_t::test_type::character;
+                        sym2.test.chars.insert(str[pos++]);
+                        syms.push_back(sym2);
+                      }
+                  }
+                continue; // discard 'sym'
+                break;
+              case 'R': // New line
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::newline;
+                break;
+              case '\'':
+              case 'Z':
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::eol;
+                break;
+              default:
+                pos = oldpos;
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::character;
+                sym.test.chars.insert(read_escape(str, pos));
+              }
+          }
+      else
+        {
           sym.type = symbol::type_t::test;
           sym.test.type = test_t::test_type::character;
           sym.test.chars.insert(str[pos]);
           pos++;
-          break;
         }
-
       syms.push_back(sym);
     }
 
