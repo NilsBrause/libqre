@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <vector>
 
-#define DEBUG
+//#define DEBUG
 
 /*! \brief Regular Expression Matcher
  *
@@ -16,12 +16,12 @@
  * - Characters:
  *   + Literal characters
  *   + Any character: .
- *   + Escaped metacharacters: \( \) \[ \{ \} \? \* \+ \. \^ \$
+ *   + Escaped metacharacters: \( \) \[ \] \{ \} \? \* \+ \. \^ \$ \\
  *   + Control characters: \0, \a, \b, \e, \f, \n, \r, \t, \v, \cA-\cZ
  *   + Newline: \R (CR/CRLF/LF)
  *   + No newline: \N
  *   + Octal numbers: \o{...}
- *   + Hex numbers: \x00-\xFF, \x{...}, \u{...}
+ *   + Hex numbers: \x00-\xFF, \x{...}
  * - Anchors:
  *   + Beginning of string: ^, \A, \`
  *   + End of string: $, \Z, \'

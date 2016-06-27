@@ -63,7 +63,7 @@ regexp::char_t regexp::read_escape(const std::string &str, unsigned int &pos)
         }
       else
         throw std::runtime_error("Missing '{'.");
-    case 'u':
+      break;
     case 'x': // Hexadecimal characters
       if(str[pos] == '{')
         {
@@ -200,13 +200,13 @@ bool regexp::read_range(const std::string &str, unsigned int &pos, range_t &r)
             }
         }
     }
-  else if(str[pos] == ',')
+  else if(str[pos++] == ',')
     {
       r.begin = 0;
       if(read_int())
         {
           r.end = n;
-          if(str[pos] == '}')
+          if(str[pos++] == '}')
             return true;
         }
     }
@@ -299,7 +299,6 @@ std::list<regexp::symbol> regexp::tokeniser(const std::string &str)
         {
           sym.type = symbol::type_t::test;
           sym.test = read_char_class(str, pos);
-          break;
         }
       else if(str[pos] == ']')
         throw std::runtime_error("mispaceed paranthesis");

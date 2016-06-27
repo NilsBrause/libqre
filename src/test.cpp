@@ -66,13 +66,34 @@ bool regexp::test_t::check(const std::string &str, unsigned int &pos,
 #ifdef DEBUG
       std::cerr << "newline" << std::endl;
 #endif
-      if(pos == str.length())
-        result = false; // no characters here
-      else if(str[pos] == '\r')
-        result = str[pos+1] == '\n' ? pos += 2, true : (pos++, true);
-      else if(str[pos] == '\n')
-        result = (pos++, true);
-      return result != neg;
+      if(pos < str.length())
+        {
+          unsigned int oldpos = pos;
+          if(str[pos] == '\r')
+            {
+              if(pos+1 < str.length() && str[pos+1] == '\n')
+                pos += 2;
+              else
+                pos++;
+              result = true;
+            }
+          else if(str[pos] == '\n')
+            {
+              pos++;
+              result = true;
+            }
+
+          if(result != neg)
+            return true;
+          else
+            {
+              pos = oldpos;
+              return false;
+            }
+        }
+      else
+        return neg; // no characters here
+      break;
 
     case test_type::character:
 #ifdef DEBUG
@@ -84,7 +105,7 @@ bool regexp::test_t::check(const std::string &str, unsigned int &pos,
       for(auto &c: chars)
         {
 #ifdef DEBUG
-          std::cerr << "\"" << c << "\", " << std::endl;
+          std::cerr << "\"" << (char)c << "\", " << std::endl;
 #endif
           if(c == str[pos])
             result = true;
@@ -103,13 +124,19 @@ bool regexp::test_t::check(const std::string &str, unsigned int &pos,
       result = result != neg;
       // subtraction
       for(auto &sub : subtractions)
-        if(result && sub.check(str, pos))
-          result = false;
+        {
+          unsigned int oldpos = pos;
+          if(result && sub.check(str, pos))
+            {
+              pos = oldpos;
+              result = false;
+              break;
+            }
+        }
       if(result)
         pos++;
       return result;
       break;
-
     default:
       throw std::runtime_error("unknowen test type.");
       return false;

@@ -46,6 +46,8 @@ bool regexp::match(std::string str)
     {
 #ifdef DEBUG
       std::cerr << "state " << state << std::endl;
+      for(auto &t : state->transitions)
+        std::cerr << "  ->" << t.state.get() << std::endl;
 #endif
       // final state?
       if(state == the_chain.end)
