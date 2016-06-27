@@ -21,6 +21,9 @@ regexp::char_t regexp::read_escape(const std::string &str, unsigned int &pos)
     case '$':
     case '\\':
       break;
+    case 'B':
+      ch = '\\';
+      break;
     case '0': // null
       ch = '\0';
       break;

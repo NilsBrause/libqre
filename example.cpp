@@ -16,9 +16,9 @@ int main()
   assert(r01.result.sub[0] == "abc");
 
   // escaped characters
-  regexp r02("\\(\\)\\[\\]\\{\\}\\?\\*\\+\\.\\^\\$\\\\");
-  assert(r02.match("()[]{}?*+.^$\\"));
-  assert(r02.result.sub[0] == "()[]{}?*+.^$\\");
+  regexp r02("\\(\\)\\[\\]\\{\\}\\?\\*\\+\\.\\^\\$\\B\\\\");
+  assert(r02.match("()[]{}?*+.^$\\\\"));
+  assert(r02.result.sub[0] == "()[]{}?*+.^$\\\\");
 
   // control characters
   regexp r03("\\a\\b\\e\\f\\n\\r\\t\\v\\cZ");
