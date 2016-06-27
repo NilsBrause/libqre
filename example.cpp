@@ -174,7 +174,15 @@ int main()
   assert(r24.result.sub[0] == "abc");
   assert(r24.result.sub.size() == 1);
 
+  // varbatim characters
+  regexp r25("\\Q?*+\\E");
+  assert(r25.match("?*+"));
 
+
+  // escapes inside character classes
+  regexp r97("a[b\t]c");
+  assert(r97.match("a\tc"));
+  
   // backtracking test
   regexp r98("a(?:bc|b)c");
   assert(r98.match("abc"));

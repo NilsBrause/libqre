@@ -22,6 +22,7 @@
  *   + No newline: \N
  *   + Octal numbers: \o{...}
  *   + Hex numbers: \x00-\xFF, \x{...}
+ *   + Verbatim characters \Q...\E
  * - Anchors:
  *   + Beginning of string: ^, \A, \`
  *   + End of string: $, \Z, \'
