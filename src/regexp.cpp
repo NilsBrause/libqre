@@ -10,10 +10,12 @@ regexp::regexp(const std::string &str)
     throw std::runtime_error("Unparsed tokens.");
 }
 
-bool regexp::operator()(const std::string &str, regexp::match &result) const
+bool regexp::operator()(const std::string &str, match &result, std::set<match_flag> flags) const
 {
   result.pos = 0;
   result.sub.clear();
+
+  std::vector<match> partials;
 
   // FSM state
   std::shared_ptr<state_t> state = the_chain.begin;
@@ -116,6 +118,13 @@ bool regexp::operator()(const std::string &str, regexp::match &result) const
       // no more transitions available
       else
         {
+          // partial match?
+          if(pos == str.length() && flags.find(match_flag::partial) != flags.end())
+            {
+              result.type = match_type::partial;
+              partials.push_back(result);
+            }
+
 #ifdef DEBUG
           std::cerr << "reverting history" << std::endl;
 #endif
@@ -138,7 +147,7 @@ bool regexp::operator()(const std::string &str, regexp::match &result) const
 
               history.pop_back();
             }
-          // no more history items -> no match
+          // try next starting point
           else if(pos < str.size())
             {
 #ifdef DEBUG
@@ -148,6 +157,17 @@ bool regexp::operator()(const std::string &str, regexp::match &result) const
               pos++;
               result.pos++;
             }
+          // partial match?
+          else if(partials.size() > 0)
+            {
+#ifdef DEBUG
+              std::cerr << "partial match" << std::endl << std::end;
+#endif
+              result = partials.front();
+              result.type = match_type::partial;
+              return true;
+            }
+          // no match at all
           else
             {
 #ifdef DEBUG

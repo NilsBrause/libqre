@@ -185,7 +185,8 @@ public:
 
   // user interface -----------------------------------------------------------
 
-  enum class match_type { none, full };
+  enum class match_type { none, full, partial };
+  enum class match_flag { partial };
 
   struct match
   {
@@ -196,5 +197,5 @@ public:
   };
 
   regexp(const std::string &str);
-  bool operator()(const std::string &str, match &result) const;
+  bool operator()(const std::string &str, match &result, std::set<match_flag> flags = {}) const;
 };

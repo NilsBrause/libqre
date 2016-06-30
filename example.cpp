@@ -180,6 +180,11 @@ int main()
   regexp r25("\\Q?*+\\E");
   assert(r25("?*+", result));
 
+  // partial matches
+  regexp r26("abcd|abce");
+  assert(!r26("abc", result));
+  assert(r26("abc", result, { regexp::match_flag::partial }));
+
 
   // escapes inside character classes
   regexp r97("a[b\t]c");
