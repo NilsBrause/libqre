@@ -37,6 +37,7 @@ void regexp::merge_state(std::shared_ptr<state_t> &dst,
         p = dst;
   dst->begin_capture |= src->begin_capture;
   dst->end_capture |= src->end_capture;
+  dst->captures.insert(dst->captures.end(), src->captures.begin(), src->captures.end());
 }
 
 regexp::chain_t regexp::clone(chain_t chain)
@@ -56,6 +57,7 @@ regexp::chain_t regexp::clone(chain_t chain)
       state_map[state] = newstate;
       newstate->begin_capture = state->begin_capture;
       newstate->end_capture = state->end_capture;
+      newstate->captures = state->captures;
       for(auto &t : state->transitions)
         {
           transition_t t2;

@@ -1,18 +1,22 @@
 #include <regexp.hpp>
 
 regexp::regexp(const std::string &str)
+  : id(0)
 {
   std::list<symbol> syms = tokeniser(str);
   the_chain = parse_expression(syms);
+
   if(!the_chain)
     throw std::runtime_error("Expected expression.");
   if(syms.size() > 0)
     throw std::runtime_error("Unparsed tokens.");
 }
 
-bool regexp::operator()(const std::string &str, match &result, std::set<match_flag> flags) const
+bool regexp::operator()(const std::string &str, match &result,
+                        std::set<match_flag> flags) const
 {
   result.pos = 0;
+  result.str = "";
   result.sub.clear();
 
   std::vector<match> partials;
@@ -21,11 +25,6 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
   std::shared_ptr<state_t> state = the_chain.begin;
   unsigned int pos = 0;
   unsigned int transition = 0;
-  std::vector<unsigned int> captures;
-
-  // overall match
-  result.sub.push_back("");
-  captures.push_back(0);
 
   // remeber
   unsigned int oldpos = pos;
@@ -36,8 +35,6 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
     std::shared_ptr<state_t> state; // current state
     unsigned int pos; // position in input stream
     unsigned int transition; // last tried transition
-    std::vector<unsigned int> captures; // active capture groups
-    std::vector<unsigned int> uncaptures; // active capture groups
   };
 
   std::list<history_item> history;
@@ -64,7 +61,6 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
       else if(transition < state->transitions.size())
         {
           // save for history rewinding
-          oldcaptures = captures;
           oldpos = pos;
 
           // close capture group
@@ -73,14 +69,12 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
 #ifdef DEBUG
               std::cerr << "end caputre: " << captures.back() << std::endl;
 #endif
-              captures.pop_back();
             }
 
           // open capture group
           if(state->begin_capture)
             {
-              result.sub.push_back("");
-              captures.push_back(result.sub.size()-1);
+              result.sub[state->captures.back()].push_back("");
 #ifdef DEBUG
               std::cerr << "new caputre: " << captures.back() << std::endl;
 #endif
@@ -97,11 +91,12 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
               std::cerr << "test succeeded" << std::endl;
 #endif
               // record captures
-              for(auto &c : captures)
-                result.sub.at(c).append(str.substr(oldpos, pos-oldpos));
+              for(auto &c : state->captures)
+                result.sub.at(c).back().append(str.substr(oldpos, pos-oldpos));
+              result.str.append(str.substr(oldpos, pos-oldpos));
 
               // successful test -> advance state
-              history_item item = { state, oldpos, transition, oldcaptures, captures };
+              history_item item = { state, oldpos, transition };
               history.push_back(item);
               state = state->transitions.at(transition).state;
               transition = 0;
@@ -119,7 +114,8 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
       else
         {
           // partial match?
-          if(pos == str.length() && flags.find(match_flag::partial) != flags.end())
+          if(pos == str.length() && flags.find(match_flag::partial)
+             != flags.end())
             {
               result.type = match_type::partial;
               partials.push_back(result);
@@ -136,14 +132,14 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
               state = history.back().state;
               pos = history.back().pos;
               transition = history.back().transition + 1; // next transition
-              captures = history.back().captures;
 
               // uncapture
-              for(auto &c : history.back().uncaptures)
-                result.sub.at(c).erase(result.sub.at(c).length()-(oldpos-pos),
-                                       oldpos-pos);
+              for(auto &c : state->captures)
+                result.sub.at(c).back().erase(result.sub.at(c).back().length()
+                                              -(oldpos-pos), oldpos-pos);
               if(state->begin_capture)
-                result.sub.pop_back();
+                result.sub.at(state->captures.back()).pop_back();
+              result.str.erase(result.str.length()-(oldpos-pos), oldpos-pos);
 
               history.pop_back();
             }
@@ -161,7 +157,7 @@ bool regexp::operator()(const std::string &str, match &result, std::set<match_fl
           else if(partials.size() > 0)
             {
 #ifdef DEBUG
-              std::cerr << "partial match" << std::endl << std::end;
+              std::cerr << "partial match" << std::endl << std::endl;
 #endif
               result = partials.front();
               result.type = match_type::partial;

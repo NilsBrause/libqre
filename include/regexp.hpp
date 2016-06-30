@@ -142,6 +142,7 @@ private:
   {
     bool begin_capture = false;
     bool end_capture = false;
+    std::vector<uint32_t> captures; // list of active capture groups
     std::vector<transition_t> transitions;
     std::vector<std::weak_ptr<state_t> > prev;
   };
@@ -174,6 +175,9 @@ private:
 
   // parser -------------------------------------------------------------------
 
+  uint32_t id = 0; // current capture id
+  std::vector<uint32_t> captures; // list of active capture groups
+
   chain_t parse_atom(std::list<symbol> &syms);
   chain_t parse_factor(std::list<symbol> &syms);
   chain_t parse_term(std::list<symbol> &syms);
@@ -190,12 +194,14 @@ public:
 
   struct match
   {
-    match_type type;
-    unsigned int pos;
-    std::vector<std::string> sub;
+    match_type type; // type of match
+    unsigned int pos; // position of match
+    std::string str; // overall match
+    std::map<uint32_t, std::vector<std::string>> sub; // sub matches
     operator bool() { return type == match_type::full; }
   };
 
   regexp(const std::string &str);
-  bool operator()(const std::string &str, match &result, std::set<match_flag> flags = {}) const;
+  bool operator()(const std::string &str, match &result,
+                  std::set<match_flag> flags = {}) const;
 };

@@ -13,6 +13,7 @@ regexp::chain_t regexp::parse_atom(std::list<symbol> &syms)
       transition.state = result.end;
       result.begin->transitions.push_back(transition);
       result.end->prev.push_back(result.begin);
+      result.begin->captures = captures;
       syms.pop_front();
       return result;
     }
@@ -20,6 +21,9 @@ regexp::chain_t regexp::parse_atom(std::list<symbol> &syms)
   else if(syms.size() && syms.front().type == symbol::type_t::lparan)
     {
       bool capture = syms.front().capture;
+      if(capture)
+        captures.push_back(id++);
+
       syms.pop_front();
       chain_t result = parse_expression(syms);
       if(!result)
@@ -27,6 +31,7 @@ regexp::chain_t regexp::parse_atom(std::list<symbol> &syms)
       if(syms.size() && syms.front().type != symbol::type_t::rparan)
         throw std::runtime_error("Expected ')'.");
       syms.pop_front();
+
       if(capture)
         {
           // Append/Prepend epsilon transition with capture information
@@ -34,10 +39,13 @@ regexp::chain_t regexp::parse_atom(std::list<symbol> &syms)
           epsilon(tmp, result.begin);
           result.begin = tmp;
           result.begin->begin_capture = true;
+          result.begin->captures = captures;
           tmp = std::make_shared<state_t>();
           epsilon(result.end, tmp);
-          result.end->end_capture = true;
           result.end = tmp;
+          result.end->end_capture = true;
+
+          captures.pop_back();
         }
       return result;
     }
