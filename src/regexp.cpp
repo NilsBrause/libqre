@@ -10,7 +10,7 @@ regexp::regexp(const std::string &str)
     throw std::runtime_error("Unparsed tokens.");
 }
 
-bool regexp::match(std::string str)
+bool regexp::operator()(const std::string &str, regexp::match &result) const
 {
   result.pos = 0;
   result.sub.clear();
@@ -55,6 +55,7 @@ bool regexp::match(std::string str)
 #ifdef DEBUG
           std::cerr << "accept" << std::endl << std::endl;
 #endif
+          result.type = match_type::full;
           return true;
         }
       // transitions left?
@@ -152,6 +153,7 @@ bool regexp::match(std::string str)
 #ifdef DEBUG
               std::cerr << "reject" << std::endl << std::endl;
 #endif
+              result.type = match_type::none;
               return false;
             }
         }
@@ -160,5 +162,6 @@ bool regexp::match(std::string str)
 #endif
     }
 
+  result.type = match_type::none;
   return false;
 }

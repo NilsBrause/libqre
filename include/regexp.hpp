@@ -185,14 +185,16 @@ public:
 
   // user interface -----------------------------------------------------------
 
-  struct match_result_t
+  enum class match_type { none, full };
+
+  struct match
   {
+    match_type type;
     unsigned int pos;
     std::vector<std::string> sub;
+    operator bool() { return type == match_type::full; }
   };
 
-  match_result_t result;
-
   regexp(const std::string &str);
-  bool match(std::string str);
+  bool operator()(const std::string &str, match &result) const;
 };
