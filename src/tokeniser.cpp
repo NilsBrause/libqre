@@ -91,9 +91,10 @@ regexp::char_t regexp::read_escape(const std::string &str, unsigned int &pos)
   return ch;
 }
 
-regexp::test_t regexp::read_char_class(const std::string &str, unsigned int &pos)
+regexp::test_t regexp::read_char_class(const std::string &str, unsigned int &pos, bool leading_backet)
 {
-  assert(str[pos++] == '[');
+  if(leading_backet)
+    assert(str[pos++] == '[');
   test_t test;
   test.type = test_t::test_type::character;
 
@@ -110,55 +111,67 @@ regexp::test_t regexp::read_char_class(const std::string &str, unsigned int &pos
 
   while(pos < str.length() && str[pos] != ']')
     {
-      char_t ch;
-      if(str[pos] == '\\')
-        ch = read_escape(str, pos);
-      else if(str[pos] == '-')
+      // character class subtraction
+      if(str.substr(pos, 2) == "-[")
         {
-          if(str[pos+1] == '[') // character class subtraction
-            {
-              test.chars.insert(ch);
-              pos++;
-              test.subtractions.push_back(read_char_class(str, pos));
-            }
-          else  // unescaped hyphen outside ranges
-            {
-              test.chars.insert(ch);
-              test.chars.insert(str[pos++]);
-            }
+          pos++;
+          test.subtractions.push_back(read_char_class(str, pos));
+        }
+      // character class intersection
+      else if(str.substr(pos, 3) == "&&[")
+        {
+          pos += 2;
+          test.intersections.push_back(read_char_class(str, pos));
+        }
+      // character class intersection without brackets
+      else if(str.substr(pos, 2) == "&&")
+        {
+          pos += 2;
+          test.intersections.push_back(read_char_class(str, pos, false));
+          return test; // closing bracket already read
         }
       else
-        ch = str[pos++];
+        {
+          // read character
+          char_t ch;
+          if(str[pos] == '\\')
+            ch = read_escape(str, pos);
+          else
+            ch = str[pos++];
 
-      if(str[pos] == '-')
-        {
-          if(str[pos+1] == ']') // unescaped hyphen at the end
+          // possible range
+          if(str[pos] == '-')
             {
-              test.chars.insert(ch);
-              test.chars.insert(str[pos++]);
-            }
-          else if(str[pos+1] == '[') // character class subtraction
-            {
-              test.chars.insert(ch);
-              pos++;
-              test.subtractions.push_back(read_char_class(str, pos));
-            }
-          else // range
-            {
-              typename test_t::char_range cr;
-              cr.begin = ch;
-              pos++;
-              if(str[pos] == '\\')
-                cr.end = read_escape(str, pos);
+              // character class subtraction
+              if(str[pos+1] == '[')
+                continue;// handle above
+              // literal '-' at the end
+              else if(str[pos+1] == ']')
+                {
+                  test.chars.insert(ch);
+                  test.chars.insert('-');
+                  pos++;
+                }
+              // range
               else
-                cr.end = str[pos++];
-              if(cr.begin > cr.end)
-                throw std::runtime_error("Invalid character range.");
-              test.ranges.insert(cr);
+                {
+                  typename test_t::char_range cr;
+                  cr.begin = ch;
+                  pos++;
+                  if(str[pos] == '\\')
+                    cr.end = read_escape(str, pos);
+                  else
+                    cr.end = str[pos++];
+
+                  if(cr.begin > cr.end)
+                    throw std::runtime_error("Invalid character range.");
+                  test.ranges.insert(cr);
+                }
             }
+          // individual character
+          else
+            test.chars.insert(ch);
         }
-      else
-        test.chars.insert(ch);
     }
   pos++;
   return test;

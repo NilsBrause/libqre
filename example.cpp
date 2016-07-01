@@ -85,6 +85,8 @@ int main()
   regexp r13("a[]-0-9-a-z-]c");
   assert(r13("abc", result));
   assert(result.str == "abc");
+  assert(r13("a8c", result));
+  assert(result.str == "a8c");
   assert(r13("a]c", result));
   assert(result.str == "a]c");
   assert(r13("a-c", result));
@@ -192,6 +194,16 @@ int main()
   assert(result.sub[0][0] == "bc");
   assert(result.sub[0][1] == "de");
   assert(result.sub[0][2] == "fg");
+
+  // character class intersection
+  regexp r28a("a[a-z&&[^ij]]c");
+  assert(r28a("abc", result));
+  assert(result.str == "abc");
+  assert(!r28a("aic", result));
+  regexp r28b("a[a-z&&a-hk-z]c");
+  assert(r28b("abc", result));
+  assert(result.str == "abc");
+  assert(!r28b("aic", result));
 
 
   // more than one capture group

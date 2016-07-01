@@ -105,23 +105,29 @@ bool regexp::test_t::check(const std::string &str, unsigned int &pos,
       for(auto &c: chars)
         {
 #ifdef DEBUG
-          std::cerr << "\"" << (char)c << "\", " << std::endl;
+          std::cerr << "\"" << (char)c << "\", " << std::flush;
 #endif
           if(c == str[pos])
             result = true;
         }
+
       // character ranges
       for(auto &r : ranges)
         {
 #ifdef DEBUG
-          std::cerr << "\"" << r.begin << "\"-\"" << r.end
-                    << "\", " << std::endl;
+          std::cerr << "\"" << (char)r.begin << "\"-\"" << (char)r.end
+                    << "\", " << std::flush;
 #endif
           if(r.begin <= str[pos] && str[pos] <= r.end)
             result = true;
         }
+#ifdef DEBUG
+      std::cerr << std::endl;
+#endif
+
       // negation
       result = result != neg;
+
       // subtraction
       for(auto &sub : subtractions)
         {
@@ -133,10 +139,25 @@ bool regexp::test_t::check(const std::string &str, unsigned int &pos,
               break;
             }
         }
+
+      // intersection
+      for(auto &itr : intersections)
+        {
+          unsigned int oldpos = pos;
+          if(result && !itr.check(str, pos))
+            {
+              result = false;
+              break;
+            }
+          else
+            pos = oldpos;
+        }
+
       if(result)
         pos++;
       return result;
       break;
+
     default:
       throw std::runtime_error("unknowen test type.");
       return false;

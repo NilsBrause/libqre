@@ -33,7 +33,7 @@
  *   + Literal ']' at the beginning: e.g. []abc], [^]abc]
  *   + Literal - outside ranges: e.g [-0-9-A-F-]
  *   + Subtractions: e.g. [a-z-[ij]]
- *   + TODO: Intersections
+ *   + Intersections: e.g. [a-z&&[^ij]] or [a-z&&a-hk-z]
  * - Alternation: abc|def
  * - Quantifiers:
  *   + Optional: a?
@@ -88,8 +88,8 @@ private:
     bool neg = false;
     std::set<char_t> chars;
     std::set<char_range> ranges;
-    std::basic_string<char_t> sequence;
     std::vector<test_t> subtractions;
+    std::vector<test_t> intersections;
 
     bool check(const std::string &str, unsigned int &pos,
                bool multiline = false) const;
@@ -123,7 +123,7 @@ private:
   // regexp parse functions
   char_t read_escape(const std::string &str, unsigned int &pos);
   test_t read_escape_sequence(const std::string &str, unsigned int &pos);
-  test_t read_char_class(const std::string &str, unsigned int &pos);
+  test_t read_char_class(const std::string &str, unsigned int &pos, bool leading_backet = true);
   bool read_range(const std::string &str, unsigned int &pos, range_t &r);
 
   std::list<symbol> tokeniser(const std::string &str);
