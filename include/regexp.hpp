@@ -106,14 +106,8 @@ private:
 
   struct symbol
   {
-    /* Grammar:
-     * expression = term, { "|", term }
-     * term       = factor, { factor }
-     * factor     = atom, [ range ]
-     * atom       = group | test
-     * group      = "(", expression, ")"
-     */
-    enum class type_t { test, range, alt, lparan, rparan };
+    enum class type_t
+    { test, range, qmark, star, plus, alt, lparan, rparan };
     type_t type;
     test_t test;
     range_t range;

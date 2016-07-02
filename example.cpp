@@ -205,6 +205,22 @@ int main()
   assert(result.str == "abc");
   assert(!r28b("aic", result));
 
+  // lazy quantifiers
+  regexp r29a("ab??c");
+  assert(r29a("ac", result));
+  assert(result.str == "ac");
+  assert(r29a("abc", result));
+  assert(result.str == "abc");
+  assert(!r29a("abbc", result));
+  regexp r29b("ab*?c");
+  assert(r29b("ac", result));
+  assert(result.str == "ac");
+  assert(r29b("abc", result));
+  assert(result.str == "abc");
+  assert(r29b("abbc", result));
+  assert(result.str == "abbc");
+  assert(!r29b("adc", result));
+
 
   // more than one capture group
   regexp r96("a(bc)d(ef)g");

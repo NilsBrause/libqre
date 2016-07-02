@@ -68,6 +68,31 @@ regexp::chain_t regexp::parse_factor(std::list<symbol> &syms)
           range = syms.front().range;
           syms.pop_front();
         }
+      else if(syms.size() && syms.front().type == symbol::type_t::qmark)
+        {
+          range.begin = 0;
+          range.end = 1;
+          syms.pop_front();
+        }
+      else if(syms.size() && syms.front().type == symbol::type_t::star)
+        {
+          range.begin = 0;
+          range.infinite = true;
+          syms.pop_front();
+        }
+      else if(syms.size() && syms.front().type == symbol::type_t::plus)
+        {
+          range.begin = 1;
+          range.infinite = true;
+          syms.pop_front();
+        }
+
+      bool lazy = false;
+      if(syms.size() && syms.front().type == symbol::type_t::qmark)
+        {
+          lazy = true;
+          syms.pop_front();
+        }
 
       // chain position
       std::shared_ptr<state_t> pos = result.begin;
@@ -86,8 +111,16 @@ regexp::chain_t regexp::parse_factor(std::list<symbol> &syms)
         {
           std::shared_ptr<state_t> end = std::make_shared<state_t>();
           epsilon(pos, atom.begin);
-          epsilon(atom.end, atom.begin);
-          epsilon(atom.end, end);
+          if(lazy)
+            {
+              epsilon(atom.end, end);
+              epsilon(atom.end, atom.begin);
+            }
+          else
+            {
+              epsilon(atom.end, atom.begin);
+              epsilon(atom.end, end);
+            }
           epsilon(pos, end);
           pos = end;
         }
@@ -96,7 +129,16 @@ regexp::chain_t regexp::parse_factor(std::list<symbol> &syms)
         for(; c < range.end; c++)
           {
             chain_t tmp = clone(atom);
-            epsilon(tmp.begin, tmp.end);
+            if(lazy)
+              {
+                std::shared_ptr<state_t> begin = std::make_shared<state_t>();
+                // make sure the epsilon comes before the atom.
+                epsilon(begin, tmp.end);
+                merge_state(begin, tmp.begin);
+                tmp.begin = begin;
+              }
+            else
+              epsilon(tmp.begin, tmp.end);
             merge_state(pos, tmp.begin);
             pos = tmp.end;
           }

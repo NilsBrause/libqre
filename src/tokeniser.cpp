@@ -268,23 +268,17 @@ std::list<regexp::symbol> regexp::tokeniser(const std::string &str)
         }
      else  if(str[pos] == '?')
         {
-          sym.type = symbol::type_t::range;
-          sym.range.begin = 0;
-          sym.range.end = 1;
+          sym.type = symbol::type_t::qmark;
           pos++;
         }
       else if(str[pos] == '*')
         {
-          sym.type = symbol::type_t::range;
-          sym.range.begin = 0;
-          sym.range.infinite = true;
+          sym.type = symbol::type_t::star;
           pos++;
         }
       else if(str[pos] == '+')
         {
-          sym.type = symbol::type_t::range;
-          sym.range.begin = 1;
-          sym.range.infinite = true;
+          sym.type = symbol::type_t::plus;
           pos++;
         }
       else if(str[pos] == '^')
