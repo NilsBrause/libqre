@@ -1,6 +1,26 @@
-#include <regexp.hpp>
+/*
+ * Copyright 2016 Nils Christopher Brause
+ *
+ * This file is part of libqre.
+ *
+ * libqre is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * libqre is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libqre.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-regexp::chain_t regexp::parse_atom(std::list<symbol> &syms)
+#include <qre.hpp>
+
+qre::chain_t qre::parse_atom(std::list<symbol> &syms)
 {
   // an atom it either a single test...
   if(syms.size() && syms.front().type == symbol::type_t::test)
@@ -52,7 +72,7 @@ regexp::chain_t regexp::parse_atom(std::list<symbol> &syms)
   return chain_t();
 }
 
-regexp::chain_t regexp::parse_factor(std::list<symbol> &syms)
+qre::chain_t qre::parse_factor(std::list<symbol> &syms)
 {
   chain_t result;
   result.begin = std::make_shared<state_t>();
@@ -150,7 +170,7 @@ regexp::chain_t regexp::parse_factor(std::list<symbol> &syms)
   return chain_t();
 }
 
-regexp::chain_t regexp::parse_term(std::list<symbol> &syms)
+qre::chain_t qre::parse_term(std::list<symbol> &syms)
 {
   chain_t chain = parse_factor(syms);
   if(!chain)
@@ -168,7 +188,7 @@ regexp::chain_t regexp::parse_term(std::list<symbol> &syms)
   return chain;
 }
 
-regexp::chain_t regexp::parse_expression(std::list<symbol> &syms)
+qre::chain_t qre::parse_expression(std::list<symbol> &syms)
 {
   chain_t tmp = parse_term(syms);
   if(!tmp)

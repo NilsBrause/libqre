@@ -1,6 +1,26 @@
-#include <regexp.hpp>
+/*
+ * Copyright 2016 Nils Christopher Brause
+ *
+ * This file is part of libqre.
+ *
+ * libqre is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * libqre is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libqre.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-regexp::char_t regexp::read_escape(const std::string &str, unsigned int &pos)
+#include <qre.hpp>
+
+qre::char_t qre::read_escape(const std::string &str, unsigned int &pos)
 {
   unsigned int oldpos = pos;
   assert(str[pos++] == '\\');
@@ -91,7 +111,7 @@ regexp::char_t regexp::read_escape(const std::string &str, unsigned int &pos)
   return ch;
 }
 
-regexp::test_t regexp::read_char_class(const std::string &str, unsigned int &pos, bool leading_backet)
+qre::test_t qre::read_char_class(const std::string &str, unsigned int &pos, bool leading_backet)
 {
   if(leading_backet)
     assert(str[pos++] == '[');
@@ -177,7 +197,7 @@ regexp::test_t regexp::read_char_class(const std::string &str, unsigned int &pos
   return test;
 }
 
-bool regexp::read_range(const std::string &str, unsigned int &pos, range_t &r)
+bool qre::read_range(const std::string &str, unsigned int &pos, range_t &r)
 {
   unsigned int oldpos = pos;
   assert(str[pos++] == '{');
@@ -231,7 +251,7 @@ bool regexp::read_range(const std::string &str, unsigned int &pos, range_t &r)
   return false;
 }
 
-std::list<regexp::symbol> regexp::tokeniser(const std::string &str)
+std::list<qre::symbol> qre::tokeniser(const std::string &str)
 {
   std::list<symbol> syms;
   unsigned int pos = 0;

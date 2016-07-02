@@ -1,6 +1,26 @@
-#include <regexp.hpp>
+/*
+ * Copyright 2016 Nils Christopher Brause
+ *
+ * This file is part of libqre.
+ *
+ * libqre is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * libqre is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libqre.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-void regexp::epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b)
+#include <qre.hpp>
+
+void qre::epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b)
 {
   transition_t t;
   t.test.type = test_t::test_type::epsilon;
@@ -9,7 +29,7 @@ void regexp::epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b)
   b->prev.push_back(a);
 }
 
-void regexp::replace_state(std::shared_ptr<state_t> &oldstate,
+void qre::replace_state(std::shared_ptr<state_t> &oldstate,
                            std::shared_ptr<state_t> &newstate)
 {
   for(auto &p : oldstate->prev)
@@ -24,7 +44,7 @@ void regexp::replace_state(std::shared_ptr<state_t> &oldstate,
   oldstate = newstate;
 }
 
-void regexp::merge_state(std::shared_ptr<state_t> &dst,
+void qre::merge_state(std::shared_ptr<state_t> &dst,
                          std::shared_ptr<state_t> &src)
 {
   assert(src->prev.size() == 0);
@@ -40,7 +60,7 @@ void regexp::merge_state(std::shared_ptr<state_t> &dst,
   dst->captures.insert(dst->captures.end(), src->captures.begin(), src->captures.end());
 }
 
-regexp::chain_t regexp::clone(chain_t chain)
+qre::chain_t qre::clone(chain_t chain)
 {
   std::map<std::shared_ptr<state_t>, std::shared_ptr<state_t>> state_map;
 
