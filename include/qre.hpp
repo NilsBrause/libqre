@@ -33,56 +33,6 @@
 
 //#define DEBUG
 
-/*! \brief Regular Expression Matcher
- *
- * Features:
- * - Characters:
- *   + Literal characters
- *   + Any character: .
- *   + Escaped metacharacters: \( \) \[ \] \{ \} \? \* \+ \. \^ \$ \B \\
- *   + Control characters: \0, \a, \b, \e, \f, \n, \r, \t, \v, \cA-\cZ
- *   + Newline: \R (CR/CRLF/LF)
- *   + No newline: \N
- *   + Octal numbers: \o{...}
- *   + Hex numbers: \x00-\xFF, \x{...}
- *   + Verbatim characters \Q...\E
- * - Anchors:
- *   + Beginning of string: ^, \A, \`
- *   + End of string: $, \Z, \'
- * - Character classes
- *   + Single characters: e.g. [abc]
- *   + Character ranges: e.g. [0-9]
- *   + Negation: e.g. [^abc]
- *   + Literal ']' at the beginning: e.g. []abc], [^]abc]
- *   + Literal - outside ranges: e.g [-0-9-A-F-]
- *   + Subtractions: e.g. [a-z-[ij]]
- *   + Intersections: e.g. [a-z&&[^ij]] or [a-z&&a-hk-z]
- * - Alternation: abc|def
- * - Quantifiers:
- *   + Optional: a?
- *   + Zero or more: a*
- *   + One or more: a+
- *   + Fixed: {n}
- *   + n or more: {n,}
- *   + Up to m: {,m}
- *   + Range: {n,m}
- *   + Greedy quanitfiers (default)
- * - Groups:
- *   + Capturing: (abc)
- *   + Non-capturing: (?:abc)
- *
- * Not supported:
- * - Literal '\' in a character class. It always escapes.
- * - Shorthands, POSIX classes and the like
- * - "multiline mode". Use \R instead.
- * - Word boundaries
- * - Lazy and possessive quanitfiers
- * - Unicode
- * - Named groups and Backraferences
- * - Special Groups
- * - Mode mofifiers
- * - Recursion and subroutines
- */
 class qre
 {
 private:
