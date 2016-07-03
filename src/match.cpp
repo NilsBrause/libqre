@@ -23,10 +23,17 @@
 bool qre::operator()(const std::string &str, match &result,
                         std::set<match_flag> flags) const
 {
+  // initialise match
   result.pos = 0;
   result.str = "";
   result.sub.clear();
 
+  // parameters
+  bool partial = flags.find(match_flag::partial) != flags.end();
+  bool fix_left = flags.find(match_flag::fix_left) != flags.end();
+  bool fix_right = flags.find(match_flag::fix_right) != flags.end();
+
+  // possible partial matches
   std::vector<match> partials;
 
   // FSM state
@@ -38,6 +45,7 @@ bool qre::operator()(const std::string &str, match &result,
   unsigned int oldpos = pos;
   std::vector<unsigned int> oldcaptures = captures;
 
+  // backtracking
   struct history_item
   {
     std::shared_ptr<state_t> state; // current state
@@ -57,7 +65,9 @@ bool qre::operator()(const std::string &str, match &result,
         std::cerr << "  ->" << t.state.get() << std::endl;
 #endif
       // final state?
-      if(state == the_chain.end)
+      if(state == the_chain.end
+         // -> accept if whole string is matched or in search mode
+         && (fix_right ? pos == str.size() : true))
         {
 #ifdef DEBUG
           std::cerr << "accept" << std::endl << std::endl;
@@ -122,8 +132,7 @@ bool qre::operator()(const std::string &str, match &result,
       else
         {
           // partial match?
-          if(pos == str.length() && flags.find(match_flag::partial)
-             != flags.end())
+          if(partial && state != the_chain.end && pos == str.length())
             {
               result.type = match_type::partial;
               partials.push_back(result);
@@ -151,8 +160,8 @@ bool qre::operator()(const std::string &str, match &result,
 
               history.pop_back();
             }
-          // try next starting point
-          else if(pos < str.size())
+          // try next starting point if in search mode
+          else if(!fix_left && pos < str.size())
             {
 #ifdef DEBUG
               std::cerr << "advance" << std::endl << std::endl;

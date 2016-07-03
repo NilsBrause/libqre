@@ -207,7 +207,7 @@ public:
   // user interface -----------------------------------------------------------
 
   enum class match_type { none, full, partial };
-  enum class match_flag { partial };
+  enum class match_flag { partial, fix_left, fix_right };
 
   struct match
   {

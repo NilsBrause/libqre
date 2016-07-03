@@ -186,6 +186,7 @@ int main()
   qre r26("abcd|abce");
   assert(!r26("abc", result));
   assert(r26("abc", result, { qre::match_flag::partial }));
+  assert(result.str == "abc");
 
   // multiple captures
   qre r27("a(..)+z");
@@ -220,6 +221,16 @@ int main()
   assert(r29b("abbc", result));
   assert(result.str == "abbc");
   assert(!r29b("adc", result));
+
+  // search
+  qre r30("[0-9]+");
+  assert(r30("abc123def", result));
+  assert(result.str == "123");
+  assert(result.pos == 3);
+  assert(!r30("abc123def", result, { qre::match_flag::fix_left }));
+  assert(!r30("abc123def", result, { qre::match_flag::fix_right }));
+  assert(r30("123def", result, { qre::match_flag::fix_left }));
+  assert(r30("abc123", result, { qre::match_flag::fix_right }));
 
 
   // more than one capture group
