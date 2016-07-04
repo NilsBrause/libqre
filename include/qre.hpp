@@ -157,7 +157,8 @@ public:
   // user interface -----------------------------------------------------------
 
   enum class match_type { none, full, partial };
-  enum class match_flag { partial, fix_left, fix_right };
+  enum class match_flag : uint8_t
+  { none = 0, partial = 1, fix_left = 2, fix_right = 4 };
 
   struct match
   {
@@ -170,7 +171,10 @@ public:
 
   qre(const std::string &str);
   bool operator()(const std::string &str, match &result,
-                  std::set<match_flag> flags = {}) const;
+                  match_flag flags = match_flag::none) const;
 };
+
+qre::match_flag operator|(const qre::match_flag &f1, const qre::match_flag &f2);
+qre::match_flag operator&(const qre::match_flag &f1, const qre::match_flag &f2);
 
 #endif // QRE_HPP

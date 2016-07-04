@@ -21,7 +21,7 @@
 #include <qre.hpp>
 
 bool qre::operator()(const std::string &str, match &result,
-                        std::set<match_flag> flags) const
+                     match_flag flags) const
 {
   // initialise match
   result.pos = 0;
@@ -29,9 +29,9 @@ bool qre::operator()(const std::string &str, match &result,
   result.sub.clear();
 
   // parameters
-  bool partial = flags.find(match_flag::partial) != flags.end();
-  bool fix_left = flags.find(match_flag::fix_left) != flags.end();
-  bool fix_right = flags.find(match_flag::fix_right) != flags.end();
+  bool partial = (flags & match_flag::partial) != match_flag::none;
+  bool fix_left = (flags & match_flag::fix_left) != match_flag::none;
+  bool fix_right = (flags & match_flag::fix_right) != match_flag::none;
 
   // possible partial matches
   std::vector<match> partials;
