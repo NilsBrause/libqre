@@ -28,6 +28,8 @@ As of now, libqre has the following features:
 
 - Beginning of string: ^, \A, \`
 - End of string: $, \Z, \'
+- Beginning of line: ^ (multiline mode)
+- End of line: $ (multiline mode)
 
 ### Character classes
 

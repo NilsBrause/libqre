@@ -38,7 +38,7 @@ bool qre::test_t::char_range::operator<(const char_range &r) const
 }
 
 bool qre::test_t::check(const std::string &str, unsigned int &pos,
-                           bool multiline) const
+                        bool multiline) const
 {
   bool result = false;
   switch(type)

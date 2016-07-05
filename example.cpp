@@ -239,6 +239,11 @@ int main()
   assert(result.str == "abcd");
   assert(!r31("abd", result));
 
+  // multiline mode
+  qre r32("^123$^abc$^456$");
+  assert(r32("123\nabc\n456", result, qre::match_flag::multiline));
+  assert(!r32("123\nabc\n456", result));
+
 
   // more than one capture group
   qre r96("a(bc)d(ef)g");
