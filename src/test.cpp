@@ -88,31 +88,44 @@ bool qre::test_t::check(const std::string &str, unsigned int &pos,
 #endif
       if(pos < str.length())
         {
-          unsigned int oldpos = pos;
+          unsigned int newpos = pos;
           if(str[pos] == '\r')
             {
               if(pos+1 < str.length() && str[pos+1] == '\n')
-                pos += 2;
+                newpos += 2;
               else
-                pos++;
+                newpos++;
               result = true;
             }
           else if(str[pos] == '\n')
             {
-              pos++;
+              newpos++;
               result = true;
             }
 
-          if(result != neg)
-            return true;
+          if(neg)
+            {
+              if(result)
+                return false;
+              else
+                {
+                  pos++;
+                  return true;
+                }
+            }
           else
             {
-              pos = oldpos;
-              return false;
+              if(result)
+                {
+                  pos = newpos;
+                  return true;
+                }
+              else
+                return false;
             }
         }
       else
-        return neg; // no characters here
+        return false; // no characters here
       break;
 
     case test_type::character:

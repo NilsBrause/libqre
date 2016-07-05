@@ -38,10 +38,10 @@ int main()
   assert(!r04("ab", result));
 
   // no newline
-  qre r05("a\\Nb");
-  assert(r05("ab", result));
-  assert(result.str == "ab");
-  assert(!r05("a\nb", result));
+  qre r05("a\\Nc");
+  assert(r05("abc", result));
+  assert(result.str == "abc");
+  assert(!r05("a\nc", result));
 
   // octal and hex numbers
   qre r06("\\o{141}\\x62\\x{63}");
