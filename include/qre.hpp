@@ -85,6 +85,7 @@ private:
     test_t test;
     range_t range;
     bool capture = true;
+    bool atomic = false;
   };
 
   // regexp parse functions
@@ -109,21 +110,22 @@ private:
   {
     bool begin_capture = false;
     bool end_capture = false;
+    bool nonstop = false; // keep backtracking
     std::vector<uint32_t> captures; // list of active capture groups
     std::vector<transition_t> transitions;
     std::vector<std::weak_ptr<state_t> > prev;
   };
 
   // espiloin transition
-  static void epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b);
+  void epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b);
 
   // replaces oldstate pointer with newstate pointer
-  static void replace_state(std::shared_ptr<state_t> &oldstate,
-                            std::shared_ptr<state_t> &newstate);
+  void replace_state(std::shared_ptr<state_t> &oldstate,
+                     std::shared_ptr<state_t> &newstate);
 
   // merges contents of src into contents of dst
-  static void merge_state(std::shared_ptr<state_t> &dst,
-                          std::shared_ptr<state_t> &src);
+  void merge_state(std::shared_ptr<state_t> &dst,
+                   std::shared_ptr<state_t> &src);
 
   // state chain
   struct chain_t
@@ -144,6 +146,7 @@ private:
 
   uint32_t id = 0; // current capture id
   std::vector<uint32_t> captures; // list of active capture groups
+  bool nonstop = false;
 
   chain_t parse_atom(std::list<symbol> &syms);
   chain_t parse_factor(std::list<symbol> &syms);

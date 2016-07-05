@@ -69,6 +69,6 @@ There is still a lot stuff, that is not supported.
 Some stuff will never be supported:
 
  - Literal '\' in a character class. Backslash always escapes.
- - Possesive quantifiers. There will be atomic groups soon.
+ - Possesive quantifiers. Usr atomic groups.
  - Unicode aside from simple code points.
  - Recursion and subroutines. This is not a progarmming language.

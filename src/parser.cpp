@@ -34,16 +34,27 @@ qre::chain_t qre::parse_atom(std::list<symbol> &syms)
       result.begin->transitions.push_back(transition);
       result.end->prev.push_back(result.begin);
       result.begin->captures = captures;
+      result.begin->nonstop = nonstop;
       syms.pop_front();
       return result;
     }
   // ...or a parenthesised group expression
   else if(syms.size() && syms.front().type == symbol::type_t::lparan)
     {
+      // get options
       bool capture = syms.front().capture;
+      bool atomic = syms.front().atomic;
+
+      // new capture group
       if(capture)
         captures.push_back(id++);
 
+      // start atomic group
+      bool oldnonstop = nonstop;
+      if(atomic)
+        nonstop = true;
+
+      // parse group contents
       syms.pop_front();
       chain_t result = parse_expression(syms);
       if(!result)
@@ -52,21 +63,29 @@ qre::chain_t qre::parse_atom(std::list<symbol> &syms)
         throw std::runtime_error("Expected ')'.");
       syms.pop_front();
 
+      // end of atomic group
+      if(atomic)
+        nonstop = oldnonstop;
+
+      // Append/Prepend epsilon transition
+      std::shared_ptr<state_t> tmp = std::make_shared<state_t>();
+      tmp->nonstop = nonstop;
+      epsilon(tmp, result.begin);
+      result.begin = tmp;
+      tmp = std::make_shared<state_t>();
+      //tmp->nonstop = nonstop;
+      epsilon(result.end, tmp);
+      result.end = tmp;
+
+      // capture information
       if(capture)
         {
-          // Append/Prepend epsilon transition with capture information
-          std::shared_ptr<state_t> tmp = std::make_shared<state_t>();
-          epsilon(tmp, result.begin);
-          result.begin = tmp;
           result.begin->begin_capture = true;
           result.begin->captures = captures;
-          tmp = std::make_shared<state_t>();
-          epsilon(result.end, tmp);
-          result.end = tmp;
           result.end->end_capture = true;
-
           captures.pop_back();
         }
+
       return result;
     }
   return chain_t();

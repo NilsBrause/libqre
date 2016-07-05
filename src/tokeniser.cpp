@@ -262,9 +262,21 @@ std::list<qre::symbol> qre::tokeniser(const std::string &str)
         {
           sym.type = symbol::type_t::lparan;
           pos++;
-          if(str[pos] == '?' && str[pos+1] == ':')
+          if(str[pos] == '?')
             {
+              // all special groups are non capturing
               sym.capture = false;
+              switch(str[pos+1])
+                {
+                case ':':
+                  break;
+                case '>':
+                  sym.atomic = true;
+                  break;
+                default:
+                  throw std::runtime_error("Unsupported group.");
+                  break;
+                }
               pos += 2;
             }
           else

@@ -27,6 +27,7 @@ void qre::epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b)
   t.state = b;
   a->transitions.push_back(t);
   b->prev.push_back(a);
+  a->nonstop = nonstop;
 }
 
 void qre::replace_state(std::shared_ptr<state_t> &oldstate,
@@ -41,6 +42,8 @@ void qre::replace_state(std::shared_ptr<state_t> &oldstate,
     }
   newstate->begin_capture = oldstate->begin_capture;
   newstate->end_capture = oldstate->end_capture;
+  newstate->nonstop = oldstate->nonstop;
+  newstate->captures = oldstate->captures;
   oldstate = newstate;
 }
 
@@ -57,6 +60,7 @@ void qre::merge_state(std::shared_ptr<state_t> &dst,
         p = dst;
   dst->begin_capture |= src->begin_capture;
   dst->end_capture |= src->end_capture;
+  dst->nonstop |= src->nonstop;
   dst->captures.insert(dst->captures.end(), src->captures.begin(), src->captures.end());
 }
 
@@ -78,6 +82,7 @@ qre::chain_t qre::clone(chain_t chain)
       newstate->begin_capture = state->begin_capture;
       newstate->end_capture = state->end_capture;
       newstate->captures = state->captures;
+      newstate->nonstop = state->nonstop;
       for(auto &t : state->transitions)
         {
           transition_t t2;

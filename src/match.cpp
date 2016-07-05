@@ -60,7 +60,8 @@ bool qre::operator()(const std::string &str, match &result,
   while(true)
     {
 #ifdef DEBUG
-      std::cerr << "state " << state << std::endl;
+      std::cerr << "state " << state
+                << " (" << state->nonstop << ")" << std::endl;
       for(auto &t : state->transitions)
         std::cerr << "  ->" << t.state.get() << std::endl;
 #endif
@@ -138,27 +139,32 @@ bool qre::operator()(const std::string &str, match &result,
               partials.push_back(result);
             }
 
-#ifdef DEBUG
-          std::cerr << "reverting history" << std::endl;
-#endif
           // going back in history
           if(history.size() > 0)
             {
-              // reverting state
-              oldpos = pos;
-              state = history.back().state;
-              pos = history.back().pos;
-              transition = history.back().transition + 1; // next transition
+              do
+                {
+#ifdef DEBUG
+                  std::cerr << "reverting history to "
+                            << history.back().state << std::endl;
+#endif
+                  // reverting state
+                  oldpos = pos;
+                  state = history.back().state;
+                  pos = history.back().pos;
+                  transition = history.back().transition + 1; // next transition
 
-              // uncapture
-              for(auto &c : state->captures)
-                result.sub.at(c).back().erase(result.sub.at(c).back().length()
-                                              -(oldpos-pos), oldpos-pos);
-              if(state->begin_capture)
-                result.sub.at(state->captures.back()).pop_back();
-              result.str.erase(result.str.length()-(oldpos-pos), oldpos-pos);
+                  // uncapture
+                  for(auto &c : state->captures)
+                    result.sub.at(c).back().erase(result.sub.at(c).back().length()
+                                                  -(oldpos-pos), oldpos-pos);
+                  if(state->begin_capture)
+                    result.sub.at(state->captures.back()).pop_back();
+                  result.str.erase(result.str.length()-(oldpos-pos), oldpos-pos);
 
-              history.pop_back();
+                  history.pop_back();
+                }
+              while(state->nonstop);
             }
           // try next starting point if in search mode
           else if(!fix_left && pos < str.size())

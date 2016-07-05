@@ -233,6 +233,12 @@ int main()
   assert(r30("abc123", result, qre::match_flag::fix_right));
   assert(r30("123", result, qre::match_flag::fix_left | qre::match_flag::fix_right));
 
+  // atomic group
+  qre r31("a(?>bc|b)d");
+  assert(r31("abcd", result));
+  assert(result.str == "abcd");
+  assert(!r31("abd", result));
+
 
   // more than one capture group
   qre r96("a(bc)d(ef)g");
