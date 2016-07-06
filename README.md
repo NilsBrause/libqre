@@ -21,7 +21,8 @@ As of now, libqre has the following features:
 - Newline: \R (CR/CRLF/LF)
 - No newline: \N
 - Octal numbers: \o{...}
-- Hex numbers: \x00-\xFF, \x{...}
+- Hex numbers: \x00-\xFF
+- Unicode code points: \u{...}
 - Verbatim characters \Q...\E
 
 ### Anchors

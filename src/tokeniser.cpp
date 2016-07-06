@@ -20,11 +20,49 @@
 
 #include <qre.hpp>
 
-qre::char_t qre::read_escape(const std::string &str, unsigned int &pos)
+char32_t qre::parse_octal(const std::u32string &str)
+{
+  char32_t result = 0;
+  for(auto &ch : str)
+    if('0' <= ch && ch <= '7')
+      {
+        result *= 8;
+        result += ch - '0';
+      }
+    else
+      throw std::runtime_error("Invalid octal number");
+  return result;
+}
+
+char32_t qre::parse_hex(const std::u32string &str)
+{
+  char32_t result = 0;
+  for(auto &ch : str)
+    if('0' <= ch && ch <= '9')
+      {
+        result *= 16;
+        result += ch - '0';
+      }
+    else if('a' <= ch && ch <= 'f')
+      {
+        result *= 16;
+        result += ch - 'a' + 10;
+      }
+    else if('A' <= ch && ch <= 'F')
+      {
+        result *= 16;
+        result += ch - 'A' + 10;
+      }
+    else
+      throw std::runtime_error("Invalid hex number");
+  return result;
+}
+
+char32_t qre::read_escape(const std::u32string &str, unsigned int &pos)
 {
   unsigned int oldpos = pos;
   assert(str[pos++] == '\\');
-  char_t ch = str[pos++];
+  char32_t ch = str[pos++];
   switch(ch)
     {
     case '(':
@@ -75,43 +113,85 @@ qre::char_t qre::read_escape(const std::string &str, unsigned int &pos)
       ch = str[pos++] & 0x1F;
       break;
     case 'o': // Octal numbers
-      if(str[pos] == '{')
+      if(str[pos++] == '{')
         {
-          typename std::basic_string<char_t>::size_type end
-            = str.find('}', pos++);
-          if(end == std::basic_string<char_t>::npos)
+          std::u32string tmp;
+          while(true)
+            {
+              if(pos >= str.length())
+                {
+                  pos = oldpos;
+                  return 0;
+                }
+              else
+                {
+                  ch = str[pos++];
+                  if(ch == '}')
+                    break;
+                  else
+                    tmp.push_back(ch);
+                }
+            }
+          if(ch != '}')
             throw std::runtime_error("Expected '}'.");
-          ch = std::stoul(str.substr(pos, end-pos), nullptr, 8);
-          pos = end + 1;
+          ch = parse_octal(tmp);
         }
       else
         throw std::runtime_error("Missing '{'.");
       break;
-    case 'x': // Hexadecimal characters
-      if(str[pos] == '{')
+    case 'u': // Hexadecimal unicode code points
+      if(str[pos++] == '{')
         {
-          typename std::basic_string<char_t>::size_type end
-            = str.find('}', pos++);
-          if(end == std::basic_string<char_t>::npos)
+          std::basic_string<char32_t> tmp;
+          while(true)
+            {
+              if(pos >= str.length())
+                {
+                  pos = oldpos;
+                  return 0;
+                }
+              else
+                {
+                  ch = str[pos++];
+                  if(ch == '}')
+                    break;
+                  else
+                    tmp.push_back(ch);
+                }
+            }
+          if(ch != '}')
             throw std::runtime_error("Expected '}'.");
-          ch = std::stoul(str.substr(pos, end-pos), nullptr, 16);
-          pos = end + 1;
+          ch = parse_hex(tmp);
         }
       else
-        {
-          ch = std::stoul(str.substr(pos, 2), nullptr, 16) & 0xFF;
-          pos += 2;
-        }
+        throw std::runtime_error("Missing '{'.");
+      break;
+      // hexadecimal characters
+    case 'x':
+      {
+        std::basic_string<char32_t> tmp;
+        for(unsigned int c = 0; c < 2; c++)
+          {
+            if(pos >= str.length())
+              {
+                pos = oldpos;
+                return 0;
+              }
+            else
+              tmp.push_back(str[pos++]);
+          }
+        ch = parse_hex(tmp);
+      }
       break;
     default:
       pos = oldpos;
-      throw std::runtime_error("Invalid escape sequence.");
+      throw std::runtime_error("Unknowen escape sequence.");
     }
 
   return ch;
 }
 
-qre::test_t qre::read_char_class(const std::string &str, unsigned int &pos, bool leading_backet)
+qre::test_t qre::read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet)
 {
   if(leading_backet)
     assert(str[pos++] == '[');
@@ -132,19 +212,19 @@ qre::test_t qre::read_char_class(const std::string &str, unsigned int &pos, bool
   while(pos < str.length() && str[pos] != ']')
     {
       // character class subtraction
-      if(str.substr(pos, 2) == "-[")
+      if(str.substr(pos, 2) == U"-[")
         {
           pos++;
           test.subtractions.push_back(read_char_class(str, pos));
         }
       // character class intersection
-      else if(str.substr(pos, 3) == "&&[")
+      else if(str.substr(pos, 3) == U"&&[")
         {
           pos += 2;
           test.intersections.push_back(read_char_class(str, pos));
         }
       // character class intersection without brackets
-      else if(str.substr(pos, 2) == "&&")
+      else if(str.substr(pos, 2) == U"&&")
         {
           pos += 2;
           test.intersections.push_back(read_char_class(str, pos, false));
@@ -153,7 +233,7 @@ qre::test_t qre::read_char_class(const std::string &str, unsigned int &pos, bool
       else
         {
           // read character
-          char_t ch;
+          char32_t ch;
           if(str[pos] == '\\')
             ch = read_escape(str, pos);
           else
@@ -197,7 +277,7 @@ qre::test_t qre::read_char_class(const std::string &str, unsigned int &pos, bool
   return test;
 }
 
-bool qre::read_range(const std::string &str, unsigned int &pos, range_t &r)
+bool qre::read_range(const std::u32string &str, unsigned int &pos, range_t &r)
 {
   unsigned int oldpos = pos;
   assert(str[pos++] == '{');
@@ -251,7 +331,7 @@ bool qre::read_range(const std::string &str, unsigned int &pos, range_t &r)
   return false;
 }
 
-std::list<qre::symbol> qre::tokeniser(const std::string &str)
+std::list<qre::symbol> qre::tokeniser(const std::u32string &str)
 {
   std::list<symbol> syms;
   unsigned int pos = 0;
@@ -343,11 +423,11 @@ std::list<qre::symbol> qre::tokeniser(const std::string &str)
           sym.test = read_char_class(str, pos);
         }
       else if(str[pos] == ']')
-        throw std::runtime_error("mispaceed paranthesis");
+        throw std::runtime_error("misplaceed paranthesis");
       else if(str[pos] == '\\')
           {
             unsigned int oldpos = pos;
-            assert(str[pos++] == '\\');
+            pos++;
             switch(str[pos++])
               {
               case '`':
@@ -365,7 +445,7 @@ std::list<qre::symbol> qre::tokeniser(const std::string &str)
                   {
                     if(pos == str.size())
                       throw std::runtime_error("Unterminated escape sequence.");
-                    if(str.substr(pos, 2) == "\\E")
+                    if(str.substr(pos, 2) == U"\\E")
                       {
                         pos += 2;
                         break;

@@ -13,7 +13,8 @@ qre = env.SharedLibrary("qre",
                          "src/tokeniser.cpp",
                          "src/parser.cpp",
                          "src/fsm.cpp",
-                         "src/match.cpp"],
+                         "src/match.cpp",
+                         "src/unicode.cpp"],
                         CPPPATH = "include")
 
 example = env.Program("example",

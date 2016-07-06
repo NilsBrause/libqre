@@ -37,79 +37,110 @@ bool qre::test_t::char_range::operator<(const char_range &r) const
     return false;
 }
 
-bool qre::test_t::check(const std::string &str, unsigned int &pos,
-                        bool multiline) const
+bool qre::check(const test_t &test, const std::string &str,
+                unsigned int &pos, bool multiline, bool utf8)
 {
   bool result = false;
-  switch(type)
+  unsigned int newpos = pos;
+  char32_t tmp;
+
+  auto advance = qre::advance;
+  auto peek = qre::peek;
+  auto peek_prev = qre::peek_prev;
+
+  if(!utf8)
     {
-    case test_type::epsilon:
+      advance = [] (const std::string &str, unsigned int &pos) -> char32_t
+        { return static_cast<char32_t>(str[pos++]) & 0xFF; };
+      peek = [] (const std::string &str, unsigned int pos) -> char32_t
+        { return static_cast<char32_t>(str[pos]) & 0xFF; };
+      peek_prev = [] (const std::string &str, unsigned int pos) -> char32_t
+        { return static_cast<char32_t>(str[pos-1]) & 0xFF; };
+    }
+
+  switch(test.type)
+    {
+    case test_t::test_type::epsilon:
 #ifdef DEBUG
       std::cerr << "epsilon" << std::endl;
 #endif
       return true;
       break;
 
-    case test_type::bol:
+    case test_t::test_type::bol:
 #ifdef DEBUG
       std::cerr << "bol" << std::endl;
 #endif
       if(multiline)
-        return pos == 0 || (pos < str.length() && str[pos-1] == '\n');
+        return pos == 0 || (pos < str.length() && peek_prev(str, pos) == '\n');
       else
         return pos == 0;
       break;
 
-    case test_type::eol:
+    case test_t::test_type::eol:
 #ifdef DEBUG
       std::cerr << "eol" << std::endl;
 #endif
       if(multiline)
-        return pos == str.length() || (pos < str.length() && str[pos] == '\n' && pos++);
+        {
+          if(pos == str.length() || (pos < str.length() && peek(str, pos) == '\n'))
+            {
+              advance(str, pos);
+              return true;
+            }
+          else
+            return false;
+        }
       else
         return pos == str.length();
       break;
 
-    case test_type::any:
+    case test_t::test_type::any:
 #ifdef DEBUG
       std::cerr << "any" << std::endl;
 #endif
       if(pos == str.length())
         return false; // no characters here
       else if(multiline)
-        return str[pos] != '\n' ? (pos++, true) : false;
+        {
+          if(peek(str, pos) != '\n')
+            {
+              advance(str, pos);
+              return true;
+            }
+          else
+            return false;
+        }
       else
-        return pos++, true;
+        {
+          advance(str, pos);
+          return true;
+        }
       break;
 
-    case test_type::newline:
+    case test_t::test_type::newline:
 #ifdef DEBUG
       std::cerr << "newline" << std::endl;
 #endif
       if(pos < str.length())
         {
-          unsigned int newpos = pos;
-          if(str[pos] == '\r')
+          tmp = advance(str, newpos);
+          if(tmp == '\r')
             {
-              if(pos+1 < str.length() && str[pos+1] == '\n')
-                newpos += 2;
-              else
-                newpos++;
+              if(pos+1 < str.length() && peek(str, newpos) == '\n')
+                advance(str, newpos);
               result = true;
             }
-          else if(str[pos] == '\n')
-            {
-              newpos++;
-              result = true;
-            }
+          else if(tmp == '\n')
+            result = true;
 
-          if(neg)
+          if(test.neg)
             {
               if(result)
                 return false;
               else
                 {
-                  pos++;
+                  advance(str, pos);
                   return true;
                 }
             }
@@ -128,30 +159,33 @@ bool qre::test_t::check(const std::string &str, unsigned int &pos,
         return false; // no characters here
       break;
 
-    case test_type::character:
+    case test_t::test_type::character:
 #ifdef DEBUG
       std::cerr << "character: " << std::flush;
 #endif
       if(pos == str.length())
         return false; // no characters here
+
+      tmp = advance(str, newpos);
+
       // single characters
-      for(auto &c: chars)
+      for(auto &c: test.chars)
         {
 #ifdef DEBUG
           std::cerr << "\"" << (char)c << "\", " << std::flush;
 #endif
-          if(c == str[pos])
+          if(c == tmp)
             result = true;
         }
 
       // character ranges
-      for(auto &r : ranges)
+      for(auto &r : test.ranges)
         {
 #ifdef DEBUG
           std::cerr << "\"" << (char)r.begin << "\"-\"" << (char)r.end
                     << "\", " << std::flush;
 #endif
-          if(r.begin <= str[pos] && str[pos] <= r.end)
+          if(r.begin <= tmp && tmp <= r.end)
             result = true;
         }
 #ifdef DEBUG
@@ -159,13 +193,13 @@ bool qre::test_t::check(const std::string &str, unsigned int &pos,
 #endif
 
       // negation
-      result = result != neg;
+      result = result != test.neg;
 
       // subtraction
-      for(auto &sub : subtractions)
+      for(auto &sub : test.subtractions)
         {
           unsigned int oldpos = pos;
-          if(result && sub.check(str, pos))
+          if(result && check(sub, str, pos, multiline, utf8))
             {
               pos = oldpos;
               result = false;
@@ -174,10 +208,10 @@ bool qre::test_t::check(const std::string &str, unsigned int &pos,
         }
 
       // intersection
-      for(auto &itr : intersections)
+      for(auto &itr : test.intersections)
         {
           unsigned int oldpos = pos;
-          if(result && !itr.check(str, pos))
+          if(result && !check(itr, str, pos, multiline, utf8))
             {
               result = false;
               break;
@@ -187,7 +221,7 @@ bool qre::test_t::check(const std::string &str, unsigned int &pos,
         }
 
       if(result)
-        pos++;
+        pos = newpos;
       return result;
       break;
 

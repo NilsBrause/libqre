@@ -23,7 +23,7 @@
 qre::qre(const std::string &str)
   : id(0)
 {
-  std::list<symbol> syms = tokeniser(str);
+  std::list<symbol> syms = tokeniser(utf8toutf32(str));
   the_chain = parse_expression(syms);
 
   if(!the_chain)

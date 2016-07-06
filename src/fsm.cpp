@@ -20,7 +20,7 @@
 
 #include <qre.hpp>
 
-void qre::epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b)
+void qre::epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b) const
 {
   transition_t t;
   t.test.type = test_t::test_type::epsilon;
@@ -31,7 +31,7 @@ void qre::epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b)
 }
 
 void qre::replace_state(std::shared_ptr<state_t> &oldstate,
-                           std::shared_ptr<state_t> &newstate)
+                           std::shared_ptr<state_t> &newstate) const
 {
   for(auto &p : oldstate->prev)
     {
@@ -48,7 +48,7 @@ void qre::replace_state(std::shared_ptr<state_t> &oldstate,
 }
 
 void qre::merge_state(std::shared_ptr<state_t> &dst,
-                         std::shared_ptr<state_t> &src)
+                         std::shared_ptr<state_t> &src) const
 {
   assert(src->prev.size() == 0);
   dst->transitions.insert(dst->transitions.end(),

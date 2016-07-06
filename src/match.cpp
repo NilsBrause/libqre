@@ -33,6 +33,7 @@ bool qre::operator()(const std::string &str, match &result,
   bool fix_left = (flags & match_flag::fix_left) != match_flag::none;
   bool fix_right = (flags & match_flag::fix_right) != match_flag::none;
   bool multiline = (flags & match_flag::multiline) != match_flag::none;
+  bool utf8 = (flags & match_flag::utf8) != match_flag::none;
 
   // possible partial matches
   std::vector<match> partials;
@@ -105,7 +106,7 @@ bool qre::operator()(const std::string &str, match &result,
                     << state->transitions.size() << std::endl;
 #endif
           // test transition
-          if(state->transitions.at(transition).test.check(str, pos, multiline))
+          if(check(state->transitions.at(transition).test, str, pos, multiline, utf8))
             {
 #ifdef DEBUG
               std::cerr << "test succeeded" << std::endl;
@@ -174,8 +175,16 @@ bool qre::operator()(const std::string &str, match &result,
               std::cerr << "advance" << std::endl << std::endl;
 #endif
               transition = 0;
-              pos++;
-              result.pos++;
+              if(utf8)
+                {
+                  advance(str, pos);
+                  result.pos = pos;
+                }
+              else
+                {
+                  pos++;
+                  result.pos++;
+                }
             }
           // partial match?
           else if(partials.size() > 0)

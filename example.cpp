@@ -44,7 +44,7 @@ int main()
   assert(!r05("a\nc", result));
 
   // octal and hex numbers
-  qre r06("\\o{141}\\x62\\x{63}");
+  qre r06("\\o{141}\\x62\\u{63}");
   assert(r06("abc", result));
   assert(result.str == "abc");
   assert(!r00("def", result));
@@ -243,6 +243,20 @@ int main()
   qre r32("^123$^abc$^456$");
   assert(r32("123\nabc\n456", result, qre::match_flag::multiline));
   assert(!r32("123\nabc\n456", result));
+
+  // unicode code points
+  qre r33a(u8"€");
+  assert(r33a(u8"€", result, qre::match_flag::utf8));
+  assert(result.str == u8"€");
+  assert(!r33a(u8"€", result));
+  qre r33b("\\u{20AC}");
+  assert(r33b(u8"€", result, qre::match_flag::utf8));
+  assert(result.str == u8"€");
+  assert(!r33b(u8"€", result));
+  qre r33c("\\xE2\\x82\\xAC");
+  assert(r33c(u8"€", result));
+  assert(result.str == u8"€");
+  assert(!r33c(u8"€", result, qre::match_flag::utf8));
 
 
   // more than one capture group

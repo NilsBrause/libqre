@@ -37,9 +37,10 @@ class qre
 {
 private:
 
-  // 32 bit character type with the same signedness as 'char'
-  typedef std::conditional<std::is_signed<char>::value,
-                           int32_t, uint32_t>::type char_t;
+  static char32_t advance(const std::string &str, unsigned int &pos);
+  static char32_t peek(const std::string &str, unsigned int pos);
+  static char32_t peek_prev(const std::string &str, unsigned int pos);
+  static std::u32string utf8toutf32(const std::string &str);
 
   // Tests --------------------------------------------------------------------
 
@@ -47,8 +48,8 @@ private:
   {
     struct char_range
     {
-      char_t begin;
-      char_t end;
+      char32_t begin;
+      char32_t end;
 
       bool operator==(const char_range &r) const;
       bool operator<(const char_range &r) const;
@@ -59,14 +60,14 @@ private:
 
     test_type type;
     bool neg = false;
-    std::set<char_t> chars;
+    std::set<char32_t> chars;
     std::set<char_range> ranges;
     std::vector<test_t> subtractions;
     std::vector<test_t> intersections;
-
-    bool check(const std::string &str, unsigned int &pos,
-               bool multiline = false) const;
   };
+
+  static bool check(const test_t &test, const std::string &str,
+                    unsigned int &pos, bool multiline, bool utf8);
 
   // tokenizer -------------------------------------------------------------------
 
@@ -89,12 +90,13 @@ private:
   };
 
   // regexp parse functions
-  char_t read_escape(const std::string &str, unsigned int &pos);
-  test_t read_escape_sequence(const std::string &str, unsigned int &pos);
-  test_t read_char_class(const std::string &str, unsigned int &pos, bool leading_backet = true);
-  bool read_range(const std::string &str, unsigned int &pos, range_t &r);
+  static char32_t parse_octal(const std::u32string &str);
+  static char32_t parse_hex(const std::u32string &str);
+  static char32_t read_escape(const std::u32string &str, unsigned int &pos);
+  static test_t read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet = true);
+  static bool read_range(const std::u32string &str, unsigned int &pos, range_t &r);
 
-  std::list<symbol> tokeniser(const std::string &str);
+  static std::list<symbol> tokeniser(const std::u32string &str);
 
   // state machine ------------------------------------------------------------
 
@@ -117,15 +119,15 @@ private:
   };
 
   // espiloin transition
-  void epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b);
+  void epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b) const;
 
   // replaces oldstate pointer with newstate pointer
   void replace_state(std::shared_ptr<state_t> &oldstate,
-                     std::shared_ptr<state_t> &newstate);
+                     std::shared_ptr<state_t> &newstate) const;
 
   // merges contents of src into contents of dst
   void merge_state(std::shared_ptr<state_t> &dst,
-                   std::shared_ptr<state_t> &src);
+                   std::shared_ptr<state_t> &src) const;
 
   // state chain
   struct chain_t
@@ -161,7 +163,7 @@ public:
 
   enum class match_type { none, full, partial };
   enum class match_flag : uint8_t
-  { none = 0, partial = 1, fix_left = 2, fix_right = 4, multiline = 8 };
+  { none = 0, partial = 1, fix_left = 2, fix_right = 4, multiline = 8, utf8 = 16 };
 
   struct match
   {
