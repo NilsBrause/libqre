@@ -106,7 +106,7 @@ bool qre::operator()(const std::string &str, match &result,
                     << state->transitions.size() << std::endl;
 #endif
           // test transition
-          if(check(state->transitions.at(transition).test, str, pos, multiline, utf8))
+          if(check(state->transitions.at(transition).test, str, pos, multiline, utf8, result))
             {
 #ifdef DEBUG
               std::cerr << "test succeeded" << std::endl;

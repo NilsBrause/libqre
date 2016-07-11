@@ -38,7 +38,8 @@ bool qre::test_t::char_range::operator<(const char_range &r) const
 }
 
 bool qre::check(const test_t &test, const std::string &str,
-                unsigned int &pos, bool multiline, bool utf8)
+                unsigned int &pos, bool multiline, bool utf8,
+                match &match_sofar)
 {
   bool result = false;
   unsigned int newpos = pos;
@@ -199,7 +200,7 @@ bool qre::check(const test_t &test, const std::string &str,
       for(auto &sub : test.subtractions)
         {
           unsigned int oldpos = pos;
-          if(result && check(sub, str, pos, multiline, utf8))
+          if(result && check(sub, str, pos, multiline, utf8, match_sofar))
             {
               pos = oldpos;
               result = false;
@@ -211,7 +212,7 @@ bool qre::check(const test_t &test, const std::string &str,
       for(auto &itr : test.intersections)
         {
           unsigned int oldpos = pos;
-          if(result && !check(itr, str, pos, multiline, utf8))
+          if(result && !check(itr, str, pos, multiline, utf8, match_sofar))
             {
               result = false;
               break;
@@ -223,6 +224,42 @@ bool qre::check(const test_t &test, const std::string &str,
       if(result)
         pos = newpos;
       return result;
+      break;
+
+    case test_t::test_type::backref:
+#ifdef DEBUG
+      std::cerr << "backref: " << test.backref.first << "," << test.backref.second << ": " << std::flush;
+#endif
+        {
+          unsigned int brp = 0;
+          if(test.backref.first > 0)
+            brp = test.backref.first-1;
+          else
+            brp = match_sofar.sub.size()+test.backref.first;
+          if(brp >= match_sofar.sub.size())
+            throw std::runtime_error("Backreference number not found.");
+
+          unsigned int brp2 = 0;
+          if(test.backref.second > 0)
+            brp2 = test.backref.second-1;
+          else
+            brp2 = match_sofar.sub.at(brp).size()+test.backref.second;
+          if(brp2 >= match_sofar.sub.at(brp).size())
+            throw std::runtime_error("Backreference number 2 not found.");
+
+          std::string br = match_sofar.sub.at(brp).at(brp2);
+#ifdef DEBUG
+          std::cerr << br << " == " << str.substr(pos, br.length()) << std::endl;
+#endif
+          // raw string comparison
+          if(br == str.substr(pos, br.length()))
+            {
+              pos += br.length();
+              return true;
+            }
+          else
+            return false;
+        }
       break;
 
     default:

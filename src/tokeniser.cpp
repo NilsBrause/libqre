@@ -34,6 +34,20 @@ char32_t qre::parse_octal(const std::u32string &str)
   return result;
 }
 
+char32_t qre::parse_decimal(const std::u32string &str)
+{
+  char32_t result = 0;
+  for(auto &ch : str)
+    if('0' <= ch && ch <= '9')
+      {
+        result *= 10;
+        result += ch - '0';
+      }
+    else
+      throw std::runtime_error("Invalid decimal number");
+  return result;
+}
+
 char32_t qre::parse_hex(const std::u32string &str)
 {
   char32_t result = 0;
@@ -331,6 +345,87 @@ bool qre::read_range(const std::u32string &str, unsigned int &pos, range_t &r)
   return false;
 }
 
+std::pair<signed int, signed int> qre::read_backref(const std::u32string &str, unsigned int &pos)
+{
+  std::pair<signed int, signed int> result = { 0, -1 };
+  char32_t paran = str[pos++];
+  switch(paran)
+    {
+    case '\'':
+      break;
+    case '<':
+      paran = '>';
+      break;
+    case '{':
+      paran = '}';
+      break;
+    }
+
+  std::u32string tmp;
+  char32_t ch;
+  bool neg = false;
+
+  if(str[pos] == '-')
+    {
+      pos++;
+      neg = true;
+    }
+  else
+    neg = false;
+  while(true)
+    {
+      if(pos >= str.length())
+        break;
+      else
+        {
+          ch = str[pos++];
+          if(ch == paran || ch == ',')
+            break;
+          else
+            tmp.push_back(ch);
+        }
+    }
+  if(ch != paran && ch != ',')
+    throw std::runtime_error("Invalid backreference.");
+  result.first = parse_decimal(tmp);
+  if(neg)
+    result.first = -result.first;
+
+  if(ch == ',')
+    {
+      tmp.clear();
+      if(str[pos] == '-')
+        {
+          pos++;
+          neg = true;
+        }
+      else
+        neg = false;
+      while(true)
+        {
+          if(pos >= str.length())
+            break;
+          else
+            {
+              ch = str[pos++];
+              if(ch == paran)
+                break;
+              else
+                tmp.push_back(ch);
+            }
+        }
+      if(ch != paran)
+        throw std::runtime_error("Invalid backreference.");
+      result.second = parse_decimal(tmp);
+      if(neg)
+        result.second = -result.second;
+    }
+
+  if(!result.first || !result.second)
+    throw std::runtime_error("Invalid backreference number.");
+  return result;
+}
+
 std::list<qre::symbol> qre::tokeniser(const std::u32string &str)
 {
   std::list<symbol> syms;
@@ -469,6 +564,12 @@ std::list<qre::symbol> qre::tokeniser(const std::u32string &str)
               case 'Z':
                 sym.type = symbol::type_t::test;
                 sym.test.type = test_t::test_type::eol;
+                break;
+              case 'g':
+              case 'k':
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::backref;
+                sym.test.backref = read_backref(str, pos);
                 break;
               default:
                 pos = oldpos;

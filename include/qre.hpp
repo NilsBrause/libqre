@@ -35,7 +35,30 @@
 
 class qre
 {
+public:
+
+  // user interface -----------------------------------------------------------
+
+  enum class match_type { none, full, partial };
+  enum class match_flag : uint8_t
+  { none = 0, partial = 1, fix_left = 2, fix_right = 4, multiline = 8, utf8 = 16 };
+
+  struct match
+  {
+    match_type type; // type of match
+    unsigned int pos; // position of match
+    std::string str; // overall match
+    std::map<uint32_t, std::vector<std::string>> sub; // sub matches
+    operator bool() { return type == match_type::full; }
+  };
+
+  qre(const std::string &str);
+  bool operator()(const std::string &str, match &result,
+                  match_flag flags = match_flag::none) const;
+
 private:
+
+  // UTF-8 handling -----------------------------------------------------------
 
   static char32_t advance(const std::string &str, unsigned int &pos);
   static char32_t peek(const std::string &str, unsigned int pos);
@@ -56,7 +79,7 @@ private:
     };
 
     enum class test_type
-    { epsilon, any, bol, eol, newline, character };
+    { epsilon, any, bol, eol, newline, backref, character };
 
     test_type type;
     bool neg = false;
@@ -64,10 +87,12 @@ private:
     std::set<char_range> ranges;
     std::vector<test_t> subtractions;
     std::vector<test_t> intersections;
+    std::pair<signed int, signed int> backref;
   };
 
   static bool check(const test_t &test, const std::string &str,
-                    unsigned int &pos, bool multiline, bool utf8);
+                    unsigned int &pos, bool multiline, bool utf8,
+                    match &match_sofar);
 
   // tokenizer -------------------------------------------------------------------
 
@@ -91,10 +116,12 @@ private:
 
   // regexp parse functions
   static char32_t parse_octal(const std::u32string &str);
+  static char32_t parse_decimal(const std::u32string &str);
   static char32_t parse_hex(const std::u32string &str);
   static char32_t read_escape(const std::u32string &str, unsigned int &pos);
   static test_t read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet = true);
   static bool read_range(const std::u32string &str, unsigned int &pos, range_t &r);
+  static std::pair<signed int, signed int> read_backref(const std::u32string &str, unsigned int &pos);
 
   static std::list<symbol> tokeniser(const std::u32string &str);
 
@@ -156,27 +183,6 @@ private:
   chain_t parse_expression(std::list<symbol> &syms);
 
   chain_t the_chain;
-
-public:
-
-  // user interface -----------------------------------------------------------
-
-  enum class match_type { none, full, partial };
-  enum class match_flag : uint8_t
-  { none = 0, partial = 1, fix_left = 2, fix_right = 4, multiline = 8, utf8 = 16 };
-
-  struct match
-  {
-    match_type type; // type of match
-    unsigned int pos; // position of match
-    std::string str; // overall match
-    std::map<uint32_t, std::vector<std::string>> sub; // sub matches
-    operator bool() { return type == match_type::full; }
-  };
-
-  qre(const std::string &str);
-  bool operator()(const std::string &str, match &result,
-                  match_flag flags = match_flag::none) const;
 };
 
 qre::match_flag operator|(const qre::match_flag &f1, const qre::match_flag &f2);

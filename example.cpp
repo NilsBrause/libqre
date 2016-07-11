@@ -258,6 +258,35 @@ int main()
   assert(result.str == u8"€");
   assert(!r33c(u8"€", result, qre::match_flag::utf8));
 
+  // backreferences
+  qre r34a("(.)(.)\\g<2>\\g<1>");
+  assert(r34a("abba", result));
+  assert(result.str == "abba");
+  assert(result.sub.size() == 2);
+  assert(result.sub[0].back() == "a");
+  assert(result.sub[1].back() == "b");
+  qre r34b("(.)(.)\\g<-1>\\g<-2>");
+  assert(r34b("abba", result));
+  assert(result.str == "abba");
+  assert(result.sub.size() == 2);
+  assert(result.sub[0].back() == "a");
+  assert(result.sub[1].back() == "b");
+  qre r34c("(.){2,}\\g<1,1>\\g<1,2>");
+  assert(r34c("abcab", result));
+  assert(result.str == "abcab");
+  assert(result.sub.size() == 1);
+  assert(result.sub[0].size() == 3);
+  assert(result.sub[0][0] == "a");
+  assert(result.sub[0][1] == "b");
+  assert(result.sub[0][2] == "c");
+  qre r34d("(.){2,}\\g<1,-2>\\g<1,-1>");
+  assert(r34d("abcbc", result));
+  assert(result.str == "abcbc");
+  assert(result.sub.size() == 1);
+  assert(result.sub[0].size() == 3);
+  assert(result.sub[0][0] == "a");
+  assert(result.sub[0][1] == "b");
+  assert(result.sub[0][2] == "c");
 
   // more than one capture group
   qre r96("a(bc)d(ef)g");

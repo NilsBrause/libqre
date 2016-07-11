@@ -63,6 +63,9 @@ e.g. abc|def
 - Capturing: e.g. (abc)
 - Non-capturing: e.g. (?:abc)
 - Multiple captures: e.g. (a.c)+
+- Backrefernces: \k'n', \k<n>, \k{n}, \g'n', \g<n>, \g{n} with n <> 0
+  or \k'n,m', \k<n,m>, \k{n,m}, \g'n,m', \g<n,m>, \g{n,m} with n <> 0, m <> 0
+  m defaults to -1.
 
 See example.cpp for more examples.
 
@@ -72,6 +75,6 @@ There is still a lot stuff, that is not supported.
 Some stuff will never be supported:
 
  - Literal '\' in a character class. Backslash always escapes.
- - Possesive quantifiers. Usr atomic groups.
+ - Possesive quantifiers. Use atomic groups.
  - Unicode aside from simple code points.
  - Recursion and subroutines. This is not a progarmming language.
