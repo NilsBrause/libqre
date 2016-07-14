@@ -63,8 +63,9 @@ e.g. `abc|def`
 - Capturing: e.g. `(abc)`
 - Non-capturing: e.g. `(?:abc)`
 - Multiple captures: e.g. `(a.c)+`
-- Backrefernces: `\k'n'`, `\k<n>`, `\k{n}`, `\g'n'`, `\g<n>`, `\g{n}` with n != 0 and m defaulting to -1
 - Backreferenced for multiple captures: `\k'n,m'`, `\k<n,m>`, `\k{n,m}`, `\g'n,m'`, `\g<n,m>`, `\g{n,m}` with n != 0 and m != 0
+- Normal backrefernces: `\k'n'`, `\k<n>`, `\k{n}`, `\g'n'`, `\g<n>`, `\g{n}` with n != 0 and m defaulting to -1
+- Short backreferences: `\1` to `\9` and `\-1` to `\-9` with m defaulting to -1
 - Forwardreferences
 
 See example.cpp for more examples.

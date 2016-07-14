@@ -287,6 +287,18 @@ int main()
   assert(result.sub[0][0] == "a");
   assert(result.sub[0][1] == "b");
   assert(result.sub[0][2] == "c");
+  qre r34e("(.)\\1");
+  assert(r34e("aa", result));
+  assert(result.str == "aa");
+  assert(result.sub.size() == 1);
+  assert(result.sub[0].size() == 1);
+  assert(result.sub[0][0] == "a");
+  qre r34f("(.)\\-1");
+  assert(r34f("aa", result));
+  assert(result.str == "aa");
+  assert(result.sub.size() == 1);
+  assert(result.sub[0].size() == 1);
+  assert(result.sub[0][0] == "a");
 
   // forward references
   qre r35("(?:\\g<1,2>def|(abc))+");

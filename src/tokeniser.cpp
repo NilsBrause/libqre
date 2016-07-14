@@ -571,6 +571,28 @@ std::list<qre::symbol> qre::tokeniser(const std::u32string &str)
                 sym.test.type = test_t::test_type::backref;
                 sym.test.backref = read_backref(str, pos);
                 break;
+              case '-':
+              case '1':
+              case '2':
+              case '3':
+              case '4':
+              case '5':
+              case '6':
+              case '7':
+              case '8':
+              case '9':
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::backref;
+                if(str[pos-1] == '-')
+                  {
+                    if('1' <= str[pos] && str[pos] <= '9')
+                      sym.test.backref = { -1*(str[pos++]-'0'), -1 };
+                    else
+                      throw std::runtime_error("Invalid negative backreference number.");
+                  }
+                else
+                  sym.test.backref = { str[pos-1]-'0', -1 };
+                break;
               default:
                 pos = oldpos;
                 sym.type = symbol::type_t::test;
