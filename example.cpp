@@ -288,6 +288,15 @@ int main()
   assert(result.sub[0][1] == "b");
   assert(result.sub[0][2] == "c");
 
+  // forward references
+  qre r35("(?:\\g<1,2>def|(abc))+");
+  assert(r35("abcabcabcdef", result));
+  assert(result.str == "abcabcabcdef");
+  assert(result.sub.size() == 1);
+  assert(result.sub[0].size() == 2);
+  assert(result.sub[0][0] == "abc");
+  assert(result.sub[0][1] == "abc");
+
   // more than one capture group
   qre r96("a(bc)d(ef)g");
   assert(r96("abcdefg", result));

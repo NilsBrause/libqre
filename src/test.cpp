@@ -237,7 +237,7 @@ bool qre::check(const test_t &test, const std::string &str,
           else
             brp = match_sofar.sub.size()+test.backref.first;
           if(brp >= match_sofar.sub.size())
-            throw std::runtime_error("Backreference number not found.");
+            return false;
 
           unsigned int brp2 = 0;
           if(test.backref.second > 0)
@@ -245,7 +245,7 @@ bool qre::check(const test_t &test, const std::string &str,
           else
             brp2 = match_sofar.sub.at(brp).size()+test.backref.second;
           if(brp2 >= match_sofar.sub.at(brp).size())
-            throw std::runtime_error("Backreference number 2 not found.");
+            return false;
 
           std::string br = match_sofar.sub.at(brp).at(brp2);
 #ifdef DEBUG

@@ -362,7 +362,7 @@ std::pair<signed int, signed int> qre::read_backref(const std::u32string &str, u
     }
 
   std::u32string tmp;
-  char32_t ch;
+  char32_t ch = 0;
   bool neg = false;
 
   if(str[pos] == '-')
