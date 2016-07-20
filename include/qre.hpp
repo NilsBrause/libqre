@@ -53,6 +53,7 @@ public:
   };
 
   qre(const std::string &str);
+  ~qre();
   bool operator()(const std::string &str, match &result,
                   match_flag flags = match_flag::none) const;
 

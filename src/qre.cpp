@@ -32,6 +32,31 @@ qre::qre(const std::string &str)
     throw std::runtime_error("Unparsed tokens.");
 }
 
+qre::~qre()
+{
+  // already visited stated
+  std::set<std::shared_ptr<state_t>> states;
+
+  std::function<void(std::shared_ptr<state_t> state)> clear
+    = [&] (std::shared_ptr<state_t> state)
+    {
+      // state already visited?
+      auto it = states.find(state);
+      if(it != states.end())
+        return;
+
+      // collect
+      states.insert(state);
+      for(auto &t : state->transitions)
+        clear(t.state);
+
+      // clear
+      state->transitions.clear();
+    };
+
+  clear(the_chain.begin);
+}
+
 qre::match_flag operator|(const qre::match_flag &f1, const qre::match_flag &f2)
 {
   return static_cast<qre::match_flag>(static_cast<uint8_t>(f1)
