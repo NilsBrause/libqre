@@ -39,7 +39,7 @@ bool qre::test_t::char_range::operator<(const char_range &r) const
 
 bool qre::check(const test_t &test, const std::string &str,
                 unsigned int &pos, bool multiline, bool utf8,
-                match &match_sofar)
+                match &match_sofar) const
 {
   bool result = false;
   unsigned int newpos = pos;

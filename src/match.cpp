@@ -38,26 +38,20 @@ bool qre::operator()(const std::string &str, match &result,
   // possible partial matches
   std::vector<match> partials;
 
-  // FSM state
-  std::shared_ptr<state_t> state = the_chain.begin;
-  unsigned int pos = 0;
-  unsigned int transition = 0;
-
-  // remeber
-  unsigned int oldpos = pos;
-  std::vector<unsigned int> oldcaptures = captures;
-
   // backtracking
-  struct history_item
+  struct fsm_state
   {
     std::shared_ptr<state_t> state; // current state
     unsigned int pos; // position in input stream
     unsigned int transition; // last tried transition
   };
+  std::list<fsm_state> history;
 
-  std::list<history_item> history;
+  // current FSM state
+  fsm_state current = { the_chain.begin, 0, 0 };
 
-  history_item current;
+  // helper
+  unsigned int newpos;
 
   while(true)
     {
@@ -68,9 +62,9 @@ bool qre::operator()(const std::string &str, match &result,
         std::cerr << "  ->" << t.state.get() << std::endl;
 #endif
       // final state?
-      if(state == the_chain.end
+      if(current.state == the_chain.end
          // -> accept if whole string is matched or in search mode
-         && (fix_right ? pos == str.size() : true))
+         && (fix_right ? current.pos == str.size() : true))
         {
 #ifdef DEBUG
           std::cerr << "accept" << std::endl << std::endl;
@@ -79,23 +73,14 @@ bool qre::operator()(const std::string &str, match &result,
           return true;
         }
       // transitions left?
-      else if(transition < state->transitions.size())
+       else if(current.transition < current.state->transitions.size())
         {
-          // save for history rewinding
-          oldpos = pos;
-
-          // close capture group
-          if(state->end_capture)
-            {
-#ifdef DEBUG
-              std::cerr << "end caputre: " << captures.back() << std::endl;
-#endif
-            }
+          newpos = current.pos;
 
           // open capture group
-          if(state->begin_capture)
+          if(current.state->begin_capture)
             {
-              result.sub[state->captures.back()].push_back("");
+              result.sub[current.state->captures.back()].push_back("");
 #ifdef DEBUG
               std::cerr << "new caputre: " << captures.back() << std::endl;
 #endif
@@ -106,21 +91,21 @@ bool qre::operator()(const std::string &str, match &result,
                     << state->transitions.size() << std::endl;
 #endif
           // test transition
-          if(check(state->transitions.at(transition).test, str, pos, multiline, utf8, result))
+          if(check(current.state->transitions.at(current.transition).test, str, newpos, multiline, utf8, result))
             {
 #ifdef DEBUG
               std::cerr << "test succeeded" << std::endl;
 #endif
               // record captures
-              for(auto &c : state->captures)
-                result.sub.at(c).back().append(str.substr(oldpos, pos-oldpos));
-              result.str.append(str.substr(oldpos, pos-oldpos));
+              for(auto &c : current.state->captures)
+                result.sub.at(c).back().append(str.substr(current.pos, newpos-current.pos));
+              result.str.append(str.substr(current.pos, newpos-current.pos));
 
               // successful test -> advance state
-              history_item item = { state, oldpos, transition };
-              history.push_back(item);
-              state = state->transitions.at(transition).state;
-              transition = 0;
+              history.push_back(current);
+              current.state = current.state->transitions.at(current.transition).state;
+              current.transition = 0;
+              current.pos = newpos;
             }
           // unsuccessfull test -> try next transition
           else
@@ -128,14 +113,14 @@ bool qre::operator()(const std::string &str, match &result,
 #ifdef DEBUG
               std::cerr << "test failed" << std::endl;
 #endif
-              transition++;
+              current.transition++;
             }
         }
       // no more transitions available
       else
         {
           // partial match?
-          if(partial && state != the_chain.end && pos == str.length())
+          if(partial && current.state != the_chain.end && current.pos == str.length())
             {
               result.type = match_type::partial;
               partials.push_back(result);
@@ -150,39 +135,40 @@ bool qre::operator()(const std::string &str, match &result,
                   std::cerr << "reverting history to "
                             << history.back().state << std::endl;
 #endif
+                  // save for history rewinding
+                  newpos = current.pos;
+
                   // reverting state
-                  oldpos = pos;
-                  state = history.back().state;
-                  pos = history.back().pos;
-                  transition = history.back().transition + 1; // next transition
+                  current = history.back();
+                  current.transition++; // next transition
 
                   // uncapture
-                  for(auto &c : state->captures)
+                  for(auto &c : current.state->captures)
                     result.sub.at(c).back().erase(result.sub.at(c).back().length()
-                                                  -(oldpos-pos), oldpos-pos);
-                  if(state->begin_capture)
-                    result.sub.at(state->captures.back()).pop_back();
-                  result.str.erase(result.str.length()-(oldpos-pos), oldpos-pos);
+                                                  -(newpos-current.pos), newpos-current.pos);
+                  if(current.state->begin_capture)
+                    result.sub.at(current.state->captures.back()).pop_back();
+                  result.str.erase(result.str.length()-(newpos-current.pos), newpos-current.pos);
 
                   history.pop_back();
                 }
-              while(state->nonstop);
+              while(current.state->nonstop);
             }
           // try next starting point if in search mode
-          else if(!fix_left && pos < str.size())
+          else if(!fix_left && current.pos < str.size())
             {
 #ifdef DEBUG
               std::cerr << "advance" << std::endl << std::endl;
 #endif
-              transition = 0;
+              current.transition = 0;
               if(utf8)
                 {
-                  advance(str, pos);
-                  result.pos = pos;
+                  advance(str, current.pos);
+                  result.pos = current.pos;
                 }
               else
                 {
-                  pos++;
+                  current.pos++;
                   result.pos++;
                 }
             }

@@ -20,7 +20,7 @@
 
 #include <qre.hpp>
 
-char32_t qre::parse_octal(const std::u32string &str)
+char32_t parse_octal(const std::u32string &str)
 {
   char32_t result = 0;
   for(auto &ch : str)
@@ -34,7 +34,7 @@ char32_t qre::parse_octal(const std::u32string &str)
   return result;
 }
 
-char32_t qre::parse_decimal(const std::u32string &str)
+char32_t parse_decimal(const std::u32string &str)
 {
   char32_t result = 0;
   for(auto &ch : str)
@@ -48,7 +48,7 @@ char32_t qre::parse_decimal(const std::u32string &str)
   return result;
 }
 
-char32_t qre::parse_hex(const std::u32string &str)
+char32_t parse_hex(const std::u32string &str)
 {
   char32_t result = 0;
   for(auto &ch : str)
@@ -72,7 +72,7 @@ char32_t qre::parse_hex(const std::u32string &str)
   return result;
 }
 
-char32_t qre::read_escape(const std::u32string &str, unsigned int &pos)
+char32_t read_escape(const std::u32string &str, unsigned int &pos)
 {
   unsigned int oldpos = pos;
   assert(str[pos++] == '\\');
@@ -205,7 +205,7 @@ char32_t qre::read_escape(const std::u32string &str, unsigned int &pos)
   return ch;
 }
 
-qre::test_t qre::read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet)
+qre::test_t qre::read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet) const
 {
   if(leading_backet)
     assert(str[pos++] == '[');
@@ -291,7 +291,7 @@ qre::test_t qre::read_char_class(const std::u32string &str, unsigned int &pos, b
   return test;
 }
 
-bool qre::read_range(const std::u32string &str, unsigned int &pos, range_t &r)
+bool qre::read_range(const std::u32string &str, unsigned int &pos, range_t &r) const
 {
   unsigned int oldpos = pos;
   assert(str[pos++] == '{');
@@ -345,7 +345,7 @@ bool qre::read_range(const std::u32string &str, unsigned int &pos, range_t &r)
   return false;
 }
 
-std::pair<signed int, signed int> qre::read_backref(const std::u32string &str, unsigned int &pos)
+std::pair<signed int, signed int> qre::read_backref(const std::u32string &str, unsigned int &pos) const
 {
   std::pair<signed int, signed int> result = { 0, -1 };
   char32_t paran = str[pos++];
@@ -426,7 +426,7 @@ std::pair<signed int, signed int> qre::read_backref(const std::u32string &str, u
   return result;
 }
 
-std::list<qre::symbol> qre::tokeniser(const std::u32string &str)
+std::list<qre::symbol> qre::tokeniser(const std::u32string &str) const
 {
   std::list<symbol> syms;
   unsigned int pos = 0;

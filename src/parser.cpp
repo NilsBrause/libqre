@@ -44,6 +44,7 @@ qre::chain_t qre::parse_atom(std::list<symbol> &syms)
       // get options
       bool capture = syms.front().capture;
       bool atomic = syms.front().atomic;
+      syms.pop_front();
 
       // new capture group
       if(capture)
@@ -55,7 +56,6 @@ qre::chain_t qre::parse_atom(std::list<symbol> &syms)
         nonstop = true;
 
       // parse group contents
-      syms.pop_front();
       chain_t result = parse_expression(syms);
       if(!result)
         throw std::runtime_error("Expected expression after '('.");
@@ -82,7 +82,6 @@ qre::chain_t qre::parse_atom(std::list<symbol> &syms)
         {
           result.begin->begin_capture = true;
           result.begin->captures = captures;
-          result.end->end_capture = true;
           captures.pop_back();
         }
 

@@ -64,7 +64,7 @@ private:
   static char32_t advance(const std::string &str, unsigned int &pos);
   static char32_t peek(const std::string &str, unsigned int pos);
   static char32_t peek_prev(const std::string &str, unsigned int pos);
-  static std::u32string utf8toutf32(const std::string &str);
+  std::u32string utf8toutf32(const std::string &str) const;
 
   // Tests --------------------------------------------------------------------
 
@@ -91,9 +91,9 @@ private:
     std::pair<signed int, signed int> backref;
   };
 
-  static bool check(const test_t &test, const std::string &str,
-                    unsigned int &pos, bool multiline, bool utf8,
-                    match &match_sofar);
+  bool check(const test_t &test, const std::string &str,
+             unsigned int &pos, bool multiline, bool utf8,
+             match &match_sofar) const;
 
   // tokenizer -------------------------------------------------------------------
 
@@ -116,15 +116,10 @@ private:
   };
 
   // regexp parse functions
-  static char32_t parse_octal(const std::u32string &str);
-  static char32_t parse_decimal(const std::u32string &str);
-  static char32_t parse_hex(const std::u32string &str);
-  static char32_t read_escape(const std::u32string &str, unsigned int &pos);
-  static test_t read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet = true);
-  static bool read_range(const std::u32string &str, unsigned int &pos, range_t &r);
-  static std::pair<signed int, signed int> read_backref(const std::u32string &str, unsigned int &pos);
-
-  static std::list<symbol> tokeniser(const std::u32string &str);
+  test_t read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet = true) const;
+  bool read_range(const std::u32string &str, unsigned int &pos, range_t &r) const;
+  std::pair<signed int, signed int> read_backref(const std::u32string &str, unsigned int &pos) const;
+  std::list<symbol> tokeniser(const std::u32string &str) const;
 
   // state machine ------------------------------------------------------------
 
@@ -139,7 +134,6 @@ private:
   struct state_t
   {
     bool begin_capture = false;
-    bool end_capture = false;
     bool nonstop = false; // keep backtracking
     std::vector<uint32_t> captures; // list of active capture groups
     std::vector<transition_t> transitions;
@@ -148,10 +142,6 @@ private:
 
   // espiloin transition
   void epsilon(std::shared_ptr<state_t> a, std::shared_ptr<state_t> b) const;
-
-  // replaces oldstate pointer with newstate pointer
-  void replace_state(std::shared_ptr<state_t> &oldstate,
-                     std::shared_ptr<state_t> &newstate) const;
 
   // merges contents of src into contents of dst
   void merge_state(std::shared_ptr<state_t> &dst,

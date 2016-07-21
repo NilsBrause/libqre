@@ -86,7 +86,7 @@ char32_t qre::peek_prev(const std::string &str, unsigned int pos)
     }
 }
 
-std::u32string qre::utf8toutf32(const std::string &str)
+std::u32string qre::utf8toutf32(const std::string &str) const
 {
   unsigned int pos = 0;
   char32_t tmp;
