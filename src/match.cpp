@@ -56,9 +56,9 @@ bool qre::operator()(const std::string &str, match &result,
   while(true)
     {
 #ifdef DEBUG
-      std::cerr << "state " << state
-                << " (" << state->nonstop << ")" << std::endl;
-      for(auto &t : state->transitions)
+      std::cerr << "state " << current.state
+                << " (" << current.state->nonstop << ")" << std::endl;
+      for(auto &t : current.state->transitions)
         std::cerr << "  ->" << t.state.get() << std::endl;
 #endif
       // final state?
@@ -87,8 +87,8 @@ bool qre::operator()(const std::string &str, match &result,
             }
 
 #ifdef DEBUG
-          std::cerr << "testing transition " << transition+1 << "/"
-                    << state->transitions.size() << std::endl;
+          std::cerr << "testing transition " << current.transition+1 << "/"
+                    << current.state->transitions.size() << std::endl;
 #endif
           // test transition
           if(check(current.state->transitions.at(current.transition).test, str, newpos, multiline, utf8, result))

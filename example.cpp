@@ -18,9 +18,9 @@ int main()
   assert(result.str == "abc");
 
   // escaped characters
-  qre r02("\\(\\)\\[\\]\\{\\}\\?\\*\\+\\.\\^\\$\\B\\\\");
-  assert(r02("()[]{}?*+.^$\\\\", result));
-  assert(result.str == "()[]{}?*+.^$\\\\");
+  qre r02("\\(\\)\\[\\]\\{\\}\\?\\*\\+\\.\\^\\$\\|\\B\\\\");
+  assert(r02("()[]{}?*+.^$|\\\\", result));
+  assert(result.str == "()[]{}?*+.^$|\\\\");
 
   // control characters
   qre r03("\\a\\b\\e\\f\\n\\r\\t\\v\\cZ");
@@ -187,6 +187,7 @@ int main()
   assert(!r26("abc", result));
   assert(r26("abc", result, qre::match_flag::partial));
   assert(result.str == "abc");
+  assert(result.type == qre::match_type::partial);
 
   // multiple captures
   qre r27("a(..)+z");
@@ -308,6 +309,10 @@ int main()
   assert(result.sub[0].size() == 2);
   assert(result.sub[0][0] == "abc");
   assert(result.sub[0][1] == "abc");
+
+  // copy constructor
+  qre r95 = qre("abc");
+  assert(r95("abc", result));
 
   // more than one capture group
   qre r96("a(bc)d(ef)g");

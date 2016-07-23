@@ -16,7 +16,7 @@ As of now, libqre has the following features:
 
 - Literal characters
 - Any character: `.`
-- Escaped metacharacters: `\(`, `\)`, `\[`, `\]`, `\{`, `\}`, `\?`, `\*`, `\+`, `\.`, `\^`, `\$`, `\B`, `\\`
+- Escaped metacharacters: `\(`, `\)`, `\[`, `\]`, `\{`, `\}`, `\?`, `\*`, `\+`, `\.`, `\^`, `\$`, `\B`, `\|`, `\\`
 - Control characters: `\0`, `\a`, `\b`, `\e`, `\f`, `\n`, `\r`, `\t`, `\v`, `\cA` - `\cZ`
 - Newline: `\R` (CR/CRLF/LF)
 - No newline: `\N`

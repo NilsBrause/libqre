@@ -91,6 +91,7 @@ char32_t read_escape(const std::u32string &str, unsigned int &pos)
     case '.':
     case '^':
     case '$':
+    case '|':
     case '\\':
       break;
     case 'B':
@@ -199,6 +200,7 @@ char32_t read_escape(const std::u32string &str, unsigned int &pos)
       break;
     default:
       pos = oldpos;
+      std::cerr << ch << std::endl;
       throw std::runtime_error("Unknowen escape sequence.");
     }
 
@@ -249,7 +251,16 @@ qre::test_t qre::read_char_class(const std::u32string &str, unsigned int &pos, b
           // read character
           char32_t ch;
           if(str[pos] == '\\')
-            ch = read_escape(str, pos);
+            {
+              // escaping hypen is only valid in character classes
+              if(str[pos+1] == '-')
+                {
+                  ch = '-';
+                  pos += 2;
+                }
+              else
+                ch = read_escape(str, pos);
+            }
           else
             ch = str[pos++];
 
@@ -273,7 +284,16 @@ qre::test_t qre::read_char_class(const std::u32string &str, unsigned int &pos, b
                   cr.begin = ch;
                   pos++;
                   if(str[pos] == '\\')
-                    cr.end = read_escape(str, pos);
+                    {
+                      // escaping hypen is only valid in character classes
+                      if(str[pos+1] == '-')
+                        {
+                          cr.end = '-';
+                          pos += 2;
+                        }
+                      else
+                        cr.end = read_escape(str, pos);
+                    }
                   else
                     cr.end = str[pos++];
 

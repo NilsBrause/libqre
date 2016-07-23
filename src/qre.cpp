@@ -24,12 +24,20 @@ qre::qre(const std::string &str)
   : id(0)
 {
   std::list<symbol> syms = tokeniser(utf8toutf32(str));
+#ifdef DEBUG
+  std::cerr << "Found " << syms.size() << " tokens" << std::endl;
+#endif
   the_chain = parse_expression(syms);
 
   if(!the_chain)
     throw std::runtime_error("Expected expression.");
   if(syms.size() > 0)
     throw std::runtime_error("Unparsed tokens.");
+}
+
+qre::qre(const qre &q)
+{
+  the_chain = clone(q.the_chain);
 }
 
 qre::~qre()
