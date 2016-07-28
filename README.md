@@ -67,6 +67,8 @@ e.g. `abc|def`
 - Normal backrefernces: `\k'n'`, `\k<n>`, `\k{n}`, `\g'n'`, `\g<n>`, `\g{n}` with n != 0 and m defaulting to -1
 - Short backreferences: `\1` to `\9` and `\-1` to `\-9` with m defaulting to -1
 - Forwardreferences
+- Named capture groups: `(?'name'.*)`, `(?<name>.*)`
+- Backreferences for named capture groups: Replace `n` with the name in above examples.
 
 See example.cpp for more examples.
 

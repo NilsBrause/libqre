@@ -80,9 +80,15 @@ bool qre::operator()(const std::string &str, match &result,
           // open capture group
           if(current.state->begin_capture)
             {
-              result.sub[current.state->captures.back()].push_back("");
+              if(!current.state->captures.back().named)
+                result.sub[current.state->captures.back().number].push_back("");
+              else
+                result.named_sub[current.state->captures.back().name].push_back("");
 #ifdef DEBUG
-              std::cerr << "new caputre: " << captures.back() << std::endl;
+              if(current.state->captures.back().named)
+                std::cerr << "new caputre: " << current.state->captures.back().name << std::endl;
+              else
+                std::cerr << "new caputre: #" << current.state->captures.back().number << std::endl;
 #endif
             }
 
@@ -98,7 +104,10 @@ bool qre::operator()(const std::string &str, match &result,
 #endif
               // record captures
               for(auto &c : current.state->captures)
-                result.sub.at(c).back().append(str.substr(current.pos, newpos-current.pos));
+                if(!c.named)
+                  result.sub.at(c.number).back().append(str.substr(current.pos, newpos-current.pos));
+                else
+                  result.named_sub.at(c.name).back().append(str.substr(current.pos, newpos-current.pos));
               result.str.append(str.substr(current.pos, newpos-current.pos));
 
               // successful test -> advance state
@@ -144,10 +153,21 @@ bool qre::operator()(const std::string &str, match &result,
 
                   // uncapture
                   for(auto &c : current.state->captures)
-                    result.sub.at(c).back().erase(result.sub.at(c).back().length()
-                                                  -(newpos-current.pos), newpos-current.pos);
+                    if(!c.named)
+                      result.sub.at(c.number).back().erase(result.sub.at(c.number).back().length()
+                                                           -(newpos-current.pos), newpos-current.pos);
+                    else
+                      result.named_sub.at(c.name).back().erase(result.named_sub.at(c.name).back().length()
+                                                               -(newpos-current.pos), newpos-current.pos);
+
                   if(current.state->begin_capture)
-                    result.sub.at(current.state->captures.back()).pop_back();
+                    {
+                      if(!current.state->captures.back().named)
+                        result.sub.at(current.state->captures.back().number).pop_back();
+                      else
+                        result.named_sub.at(current.state->captures.back().name).pop_back();
+                    }
+
                   result.str.erase(result.str.length()-(newpos-current.pos), newpos-current.pos);
 
                   history.pop_back();

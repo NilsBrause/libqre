@@ -310,6 +310,15 @@ int main()
   assert(result.sub[0][0] == "abc");
   assert(result.sub[0][1] == "abc");
 
+  // named capture groups
+  qre r36("a(?<test>.)c\\k{test}a");
+  assert(r36("abcba", result));
+  assert(result.str == "abcba");
+  assert(result.sub.size() == 0);
+  assert(result.named_sub.size() == 1);
+  assert(result.named_sub["test"].size() == 1);
+  assert(result.named_sub["test"][0] == "b");
+
   // copy constructor
   qre r95 = qre("abc");
   assert(r95("abc", result));

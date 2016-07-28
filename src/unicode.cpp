@@ -95,3 +95,32 @@ std::u32string qre::utf8toutf32(const std::string &str) const
     result.push_back(tmp);
   return result;
 }
+
+std::string qre::utf32toutf8(const std::u32string &str) const
+{
+  std::string result;
+  for(auto &ch : str)
+    if(ch <= 0x7F)
+      result += static_cast<char>(ch);
+    else if(ch <= 0x7FF)
+      {
+        result += static_cast<char>(((ch >> 6) & 0x1F) | 0xC0);
+        result += static_cast<char>(((ch >> 0) & 0x3F) | 0x80);
+      }
+    else if(ch <= 0xFFFF)
+      {
+        result += static_cast<char>(((ch >> 12) & 0x0F) | 0xE0);
+        result += static_cast<char>(((ch >> 6) & 0x3F) | 0x80);
+        result += static_cast<char>(((ch >> 0) & 0x3F) | 0x80);
+      }
+    else if(ch <= 0x10FFFF)
+      {
+        result += static_cast<char>(((ch >> 18) & 0x07) | 0xF0);
+        result += static_cast<char>(((ch >> 12) & 0x3F) | 0x80);
+        result += static_cast<char>(((ch >> 6) & 0x3F) | 0x80);
+        result += static_cast<char>(((ch >> 0) & 0x3F) | 0x80);
+      }
+    else
+      throw std::runtime_error("Invalid UTF-32");
+  return result;
+}

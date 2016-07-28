@@ -44,11 +44,18 @@ qre::chain_t qre::parse_atom(std::list<symbol> &syms)
       // get options
       bool capture = syms.front().capture;
       bool atomic = syms.front().atomic;
+      bool named = syms.front().named;
+      std::string name = syms.front().name;
       syms.pop_front();
 
       // new capture group
       if(capture)
-        captures.push_back(id++);
+        {
+          if(named)
+            captures.push_back({ true, 0, name });
+          else
+            captures.push_back({ false, id++, "" });
+        }
 
       // start atomic group
       bool oldnonstop = nonstop;

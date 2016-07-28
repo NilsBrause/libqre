@@ -280,7 +280,7 @@ qre::test_t qre::read_char_class(const std::u32string &str, unsigned int &pos, b
               // range
               else
                 {
-                  typename test_t::char_range cr;
+                  char_range cr;
                   cr.begin = ch;
                   pos++;
                   if(str[pos] == '\\')
@@ -365,9 +365,9 @@ bool qre::read_range(const std::u32string &str, unsigned int &pos, range_t &r) c
   return false;
 }
 
-std::pair<signed int, signed int> qre::read_backref(const std::u32string &str, unsigned int &pos) const
+std::pair<qre::capture_t, signed int> qre::read_backref(const std::u32string &str, unsigned int &pos) const
 {
-  std::pair<signed int, signed int> result = { 0, -1 };
+  std::pair<qre::capture_t, signed int> result;
   char32_t paran = str[pos++];
   switch(paran)
     {
@@ -381,68 +381,86 @@ std::pair<signed int, signed int> qre::read_backref(const std::u32string &str, u
       break;
     }
 
-  std::u32string tmp;
-  char32_t ch = 0;
-  bool neg = false;
+  // end of backreference
+  size_t tmp = str.find(paran, pos);
+  if(tmp == std::u32string::npos)
+    throw std::runtime_error("Invalid backreference.");
+  std::string first = utf32toutf8(str.substr(pos, tmp-pos));
+  pos = tmp+1;
 
-  if(str[pos] == '-')
+  // has comma?
+  tmp = first.find(',');
+  std::string second;
+  if(tmp != std::string::npos)
     {
-      pos++;
-      neg = true;
+      second = first.substr(tmp+1);
+      first = first.substr(0, tmp);
     }
   else
-    neg = false;
-  while(true)
-    {
-      if(pos >= str.length())
-        break;
-      else
-        {
-          ch = str[pos++];
-          if(ch == paran || ch == ',')
-            break;
-          else
-            tmp.push_back(ch);
-        }
-    }
-  if(ch != paran && ch != ',')
+    second = "-1";
+
+  // no additional comma
+  tmp = second.find(',');
+  if(tmp != std::string::npos)
     throw std::runtime_error("Invalid backreference.");
-  result.first = parse_decimal(tmp);
-  if(neg)
-    result.first = -result.first;
 
-  if(ch == ',')
+  size_t len;
+  try
     {
-      tmp.clear();
-      if(str[pos] == '-')
-        {
-          pos++;
-          neg = true;
-        }
+      int i = stoi(first, &len);
+      if(len != first.length())
+        result.first = { true, 0, first };
       else
-        neg = false;
-      while(true)
-        {
-          if(pos >= str.length())
-            break;
-          else
-            {
-              ch = str[pos++];
-              if(ch == paran)
-                break;
-              else
-                tmp.push_back(ch);
-            }
-        }
-      if(ch != paran)
-        throw std::runtime_error("Invalid backreference.");
-      result.second = parse_decimal(tmp);
-      if(neg)
-        result.second = -result.second;
+        result.first = { false, i, "" };
+    }
+  catch(...)
+    {
+      result.first = { true, 0, first };
     }
 
-  if(!result.first || !result.second)
+  int i = stoi(second, &len);
+  if(len != second.length())
+    throw std::runtime_error("Invalid backreference.");
+  result.second = i;
+
+  if((result.first.named && result.first.name == "")
+     || (!result.first.named && !result.first.number)
+     || !result.second)
     throw std::runtime_error("Invalid backreference number.");
+
+  return result;
+}
+
+std::u32string qre::read_cg_name(const std::u32string str, unsigned int &pos) const
+{
+  char32_t paran;
+  switch(str[pos++])
+    {
+    case '\'':
+      paran = '\'';
+      break;
+    case '<':
+      paran = '>';
+      break;
+    default:
+      throw std::runtime_error("Invalid named capture group.");
+      break;
+    }
+
+  unsigned int end = str.find(paran, pos);
+  std::u32string result = str.substr(pos, end-pos);
+
+  bool fine = false;
+  for(auto &ch : result)
+    if(ch < '0' || ch > '9')
+      {
+        fine  = true;
+        break;
+      }
+  if(!fine)
+    throw std::runtime_error("capture group names must contain non-digits.");
+
+  pos = end+1;
   return result;
 }
 
@@ -459,20 +477,28 @@ std::list<qre::symbol> qre::tokeniser(const std::u32string &str) const
           pos++;
           if(str[pos] == '?')
             {
-              // all special groups are non capturing
-              sym.capture = false;
               switch(str[pos+1])
                 {
                 case ':':
+                  sym.capture = false;
+                  pos += 2;
                   break;
                 case '>':
+                  sym.capture = false;
                   sym.atomic = true;
+                  pos += 2;
+                  break;
+                case '<':
+                case '\'':
+                  sym.capture = true;
+                  sym.named = true;
+                  pos++;
+                  sym.name = utf32toutf8(read_cg_name(str, pos));
                   break;
                 default:
                   throw std::runtime_error("Unsupported group.");
                   break;
                 }
-              pos += 2;
             }
           else
             sym.capture = true;
@@ -592,6 +618,13 @@ std::list<qre::symbol> qre::tokeniser(const std::u32string &str) const
                 sym.test.backref = read_backref(str, pos);
                 break;
               case '-':
+                sym.type = symbol::type_t::test;
+                sym.test.type = test_t::test_type::backref;
+                if('1' <= str[pos] && str[pos] <= '9')
+                  sym.test.backref = { { false, -1*(static_cast<signed int>(str[pos++]-'0')), "" }, -1 };
+                else
+                  throw std::runtime_error("Invalid negative backreference number.");
+                break;
               case '1':
               case '2':
               case '3':
@@ -603,15 +636,7 @@ std::list<qre::symbol> qre::tokeniser(const std::u32string &str) const
               case '9':
                 sym.type = symbol::type_t::test;
                 sym.test.type = test_t::test_type::backref;
-                if(str[pos-1] == '-')
-                  {
-                    if('1' <= str[pos] && str[pos] <= '9')
-                      sym.test.backref = { -1*(str[pos++]-'0'), -1 };
-                    else
-                      throw std::runtime_error("Invalid negative backreference number.");
-                  }
-                else
-                  sym.test.backref = { str[pos-1]-'0', -1 };
+                sym.test.backref = { { false, static_cast<signed int>(str[pos-1]-'0'), "" }, -1 };
                 break;
               default:
                 pos = oldpos;

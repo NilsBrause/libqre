@@ -20,12 +20,12 @@
 
 #include <qre.hpp>
 
-bool qre::test_t::char_range::operator==(const char_range &r) const
+bool qre::char_range::operator==(const char_range &r) const
 {
   return begin == r.begin && end == r.end;
 }
 
-bool qre::test_t::char_range::operator<(const char_range &r) const
+bool qre::char_range::operator<(const char_range &r) const
 {
   if(begin < r.begin)
     return true;
@@ -228,26 +228,42 @@ bool qre::check(const test_t &test, const std::string &str,
 
     case test_t::test_type::backref:
 #ifdef DEBUG
-      std::cerr << "backref: " << test.backref.first << "," << test.backref.second << ": " << std::flush;
+      if(test.backref.first.named)
+        std::cerr << "backref: " << test.backref.first.name << "," << test.backref.second << ": " << std::flush;
+      else
+        std::cerr << "backref: " << test.backref.first.number << "," << test.backref.second << ": " << std::flush;
 #endif
         {
-          unsigned int brp = 0;
-          if(test.backref.first > 0)
-            brp = test.backref.first-1;
+          std::vector<std::string> *brp;
+          if(test.backref.first.named)
+            {
+              if(match_sofar.named_sub.find(test.backref.first.name)
+                 != match_sofar.named_sub.end())
+                brp = &match_sofar.named_sub[test.backref.first.name];
+              else
+                return false;
+            }
           else
-            brp = match_sofar.sub.size()+test.backref.first;
-          if(brp >= match_sofar.sub.size())
-            return false;
+            {
+              unsigned int tmp;
+              if(test.backref.first.number > 0)
+                tmp = test.backref.first.number-1;
+              else
+                tmp = match_sofar.sub.size()+test.backref.first.number;
+              if(tmp >= match_sofar.sub.size())
+                return false;
+              brp = &match_sofar.sub[tmp];
+            }
 
           unsigned int brp2 = 0;
           if(test.backref.second > 0)
             brp2 = test.backref.second-1;
           else
-            brp2 = match_sofar.sub.at(brp).size()+test.backref.second;
-          if(brp2 >= match_sofar.sub.at(brp).size())
+            brp2 = brp->size()+test.backref.second;
+          if(brp2 >= brp->size())
             return false;
 
-          std::string br = match_sofar.sub.at(brp).at(brp2);
+          std::string br = brp->at(brp2);
 #ifdef DEBUG
           std::cerr << br << " == " << str.substr(pos, br.length()) << std::endl;
 #endif

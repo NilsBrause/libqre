@@ -49,6 +49,7 @@ public:
     unsigned int pos; // position of match
     std::string str; // overall match
     std::map<uint32_t, std::vector<std::string>> sub; // sub matches
+    std::map<std::string, std::vector<std::string>> named_sub; // named sub matches
     operator bool() { return type == match_type::full; }
   };
 
@@ -66,20 +67,30 @@ private:
   static char32_t peek(const std::string &str, unsigned int pos);
   static char32_t peek_prev(const std::string &str, unsigned int pos);
   std::u32string utf8toutf32(const std::string &str) const;
+  std::string utf32toutf8(const std::u32string &str) const;
+
+  // Helper structs -----------------------------------------------------------
+
+  struct capture_t
+  {
+    bool named;
+    signed int number;
+    std::string name;
+  };
+
+  struct char_range
+  {
+    char32_t begin;
+    char32_t end;
+
+    bool operator==(const char_range &r) const;
+    bool operator<(const char_range &r) const;
+  };
 
   // Tests --------------------------------------------------------------------
 
   struct test_t
   {
-    struct char_range
-    {
-      char32_t begin;
-      char32_t end;
-
-      bool operator==(const char_range &r) const;
-      bool operator<(const char_range &r) const;
-    };
-
     enum class test_type
     { epsilon, any, bol, eol, newline, backref, character };
 
@@ -89,7 +100,7 @@ private:
     std::set<char_range> ranges;
     std::vector<test_t> subtractions;
     std::vector<test_t> intersections;
-    std::pair<signed int, signed int> backref;
+    std::pair<capture_t, signed int> backref;
   };
 
   bool check(const test_t &test, const std::string &str,
@@ -112,14 +123,17 @@ private:
     type_t type;
     test_t test;
     range_t range;
+    std::string name;
     bool capture = true;
     bool atomic = false;
+    bool named = false;
   };
 
   // regexp parse functions
   test_t read_char_class(const std::u32string &str, unsigned int &pos, bool leading_backet = true) const;
   bool read_range(const std::u32string &str, unsigned int &pos, range_t &r) const;
-  std::pair<signed int, signed int> read_backref(const std::u32string &str, unsigned int &pos) const;
+  std::pair<capture_t, signed int> read_backref(const std::u32string &str, unsigned int &pos) const;
+  std::u32string read_cg_name(const std::u32string str, unsigned int &pos) const;
   std::list<symbol> tokeniser(const std::u32string &str) const;
 
   // state machine ------------------------------------------------------------
@@ -136,7 +150,7 @@ private:
   {
     bool begin_capture = false;
     bool nonstop = false; // keep backtracking
-    std::vector<uint32_t> captures; // list of active capture groups
+    std::vector<capture_t> captures; // list of active capture groups
     std::vector<transition_t> transitions;
     std::vector<std::weak_ptr<state_t> > prev;
   };
@@ -165,8 +179,8 @@ private:
 
   // parser -------------------------------------------------------------------
 
-  uint32_t id = 0; // current capture id
-  std::vector<uint32_t> captures; // list of active capture groups
+  signed int id = 0; // current capture id
+  std::vector<capture_t> captures; // list of active capture groups
   bool nonstop = false;
 
   chain_t parse_atom(std::list<symbol> &syms);
