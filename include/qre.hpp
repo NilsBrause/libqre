@@ -53,8 +53,12 @@ public:
     operator bool() { return type == match_type::full; }
   };
 
+  qre();
   qre(const std::string &str);
   qre(const qre &q);
+  qre(qre &&q);
+  qre &operator=(const qre &p);
+  qre &operator=(qre &&p);
   ~qre();
   bool operator()(const std::string &str, match &result,
                   match_flag flags = match_flag::none) const;

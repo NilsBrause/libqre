@@ -20,6 +20,13 @@
 
 #include <qre.hpp>
 
+qre::qre()
+{
+  the_chain.begin = std::make_shared<state_t>();
+  the_chain.end = std::make_shared<state_t>();
+  epsilon(the_chain.begin, the_chain.end);
+}
+
 qre::qre(const std::string &str)
   : id(0)
 {
@@ -37,7 +44,24 @@ qre::qre(const std::string &str)
 
 qre::qre(const qre &q)
 {
+  *this = q;
+}
+
+qre::qre(qre &&q)
+{
+  *this = q;
+}
+
+qre &qre::operator=(const qre &q)
+{
   the_chain = clone(q.the_chain);
+  return *this;
+}
+
+qre &qre::operator=(qre &&q)
+{
+  std::swap(the_chain, q.the_chain);
+  return *this;
 }
 
 qre::~qre()

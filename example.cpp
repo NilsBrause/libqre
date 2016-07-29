@@ -320,8 +320,11 @@ int main()
   assert(result.named_sub["test"][0] == "b");
 
   // copy constructor
-  qre r95 = qre("abc");
-  assert(r95("abc", result));
+  qre r95a("abc");
+  qre r95b(r95a);
+  assert(r95b("abc", result));
+  assert(result.str == "abc");
+  assert(!r95b("def", result));
 
   // more than one capture group
   qre r96("a(bc)d(ef)g");
