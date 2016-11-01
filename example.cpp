@@ -319,6 +319,12 @@ int main()
   assert(result.named_sub["test"].size() == 1);
   assert(result.named_sub["test"][0] == "b");
 
+  qre r37("abc|abcd");
+  assert(r37("abcd", result));
+  assert(result.str == "abc");
+  assert(r37("abcd", result, qre::match_flag::longest));
+  assert(result.str == "abcd");
+
   // copy constructor
   qre r95a("abc");
   qre r95b(r95a);

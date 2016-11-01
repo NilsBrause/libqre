@@ -34,9 +34,13 @@ bool qre::operator()(const std::string &str, match &result,
   bool fix_right = (flags & match_flag::fix_right) != match_flag::none;
   bool multiline = (flags & match_flag::multiline) != match_flag::none;
   bool utf8 = (flags & match_flag::utf8) != match_flag::none;
+  bool longest = (flags & match_flag::longest) != match_flag::none;
 
   // possible partial matches
   std::vector<match> partials;
+
+  // complete matches
+  std::vector<match> matches;
 
   // backtracking
   struct fsm_state
@@ -70,10 +74,14 @@ bool qre::operator()(const std::string &str, match &result,
           std::cerr << "accept" << std::endl << std::endl;
 #endif
           result.type = match_type::full;
-          return true;
+
+          if(longest)
+            matches.push_back(result);
+          else
+            return true;
         }
       // transitions left?
-       else if(current.transition < current.state->transitions.size())
+      if(current.state != the_chain.end && current.transition < current.state->transitions.size())
         {
           newpos = current.pos;
 
@@ -191,6 +199,14 @@ bool qre::operator()(const std::string &str, match &result,
                   current.pos++;
                   result.pos++;
                 }
+            }
+          // choose the longest match
+          else if(matches.size() > 0)
+            {
+              for(auto &m : matches)
+                if(m.str.size() > result.str.size())
+                  result = m;
+              return true;
             }
           // partial match?
           else if(partials.size() > 0)

@@ -11,6 +11,7 @@ As of now, libqre has the following features:
 - serach match
 - left and right anchors
 - partial matches (string is shorter than regex)
+- longest match
 
 ### Characters:
 

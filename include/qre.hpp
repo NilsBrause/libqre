@@ -41,7 +41,7 @@ public:
 
   enum class match_type { none, full, partial };
   enum class match_flag : uint8_t
-  { none = 0, partial = 1, fix_left = 2, fix_right = 4, multiline = 8, utf8 = 16 };
+    { none = 0, partial = 1, fix_left = 2, fix_right = 4, multiline = 8, utf8 = 16, longest = 32 };
 
   struct match
   {
