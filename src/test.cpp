@@ -84,7 +84,9 @@ bool qre::check(const test_t &test, const std::string &str,
 #endif
       if(multiline)
         {
-          if(pos == str.length() || (pos < str.length() && peek(str, pos) == '\n'))
+          if(pos == str.length())
+            return true;
+          else if(peek(str, pos) == '\n')
             {
               advance(str, pos);
               return true;
