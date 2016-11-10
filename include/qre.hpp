@@ -71,6 +71,7 @@ private:
   static char32_t peek(const std::string &str, unsigned int pos);
   static char32_t peek_prev(const std::string &str, unsigned int pos);
   std::u32string utf8toutf32(const std::string &str) const;
+  std::string utf32toutf8(char32_t ch) const;
   std::string utf32toutf8(const std::u32string &str) const;
 
   // Helper structs -----------------------------------------------------------
