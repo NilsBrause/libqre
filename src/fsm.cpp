@@ -51,7 +51,7 @@ qre::chain_t qre::clone(chain_t chain)
   std::map<std::shared_ptr<state_t>, std::shared_ptr<state_t>> state_map;
 
   std::function<std::shared_ptr<state_t>(std::shared_ptr<state_t>)> clone
-    = [&] (std::shared_ptr<state_t> state) -> std::shared_ptr<state_t>
+    = [&clone, &state_map] (std::shared_ptr<state_t> state) -> std::shared_ptr<state_t>
     {
       // state already cloned?
       auto it = state_map.find(state);

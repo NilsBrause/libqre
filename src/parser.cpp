@@ -22,7 +22,7 @@
 
 qre::chain_t qre::parse_atom(std::list<symbol> &syms)
 {
-  // an atom it either a single test...
+  // an atom is either a single test...
   if(syms.size() && syms.front().type == symbol::type_t::test)
     {
       chain_t result;
@@ -66,7 +66,7 @@ qre::chain_t qre::parse_atom(std::list<symbol> &syms)
       chain_t result = parse_expression(syms);
       if(!result)
         throw std::runtime_error("Expected expression after '('.");
-      if(syms.size() && syms.front().type != symbol::type_t::rparan)
+      if(!syms.size() || syms.front().type != symbol::type_t::rparan)
         throw std::runtime_error("Expected ')'.");
       syms.pop_front();
 
@@ -104,95 +104,97 @@ qre::chain_t qre::parse_factor(std::list<symbol> &syms)
 
   // parse an atom
   chain_t atom = parse_atom(syms);
-  if(atom)
+  if(!atom)
+    return chain_t();
+
+  // check for modifier
+  range_t range;
+  if(syms.size() && syms.front().type == symbol::type_t::range)
     {
-      // check for modifier
-      range_t range;
-      if(syms.size() && syms.front().type == symbol::type_t::range)
-        {
-          range = syms.front().range;
-          syms.pop_front();
-        }
-      else if(syms.size() && syms.front().type == symbol::type_t::qmark)
-        {
-          range.begin = 0;
-          range.end = 1;
-          syms.pop_front();
-        }
-      else if(syms.size() && syms.front().type == symbol::type_t::star)
-        {
-          range.begin = 0;
-          range.infinite = true;
-          syms.pop_front();
-        }
-      else if(syms.size() && syms.front().type == symbol::type_t::plus)
-        {
-          range.begin = 1;
-          range.infinite = true;
-          syms.pop_front();
-        }
-
-      bool lazy = false;
-      if(syms.size() && syms.front().type == symbol::type_t::qmark)
-        {
-          lazy = true;
-          syms.pop_front();
-        }
-
-      // chain position
-      std::shared_ptr<state_t> pos = result.begin;
-
-      // append minimum
-      unsigned int c = 0;
-      for(; c < range.begin; c++)
-        {
-          chain_t tmp = clone(atom);
-          merge_state(pos, tmp.begin);
-          pos = tmp.end;
-        }
-
-      // append infinity
-      if(range.infinite)
-        {
-          std::shared_ptr<state_t> end = std::make_shared<state_t>();
-          epsilon(pos, atom.begin);
-          if(lazy)
-            {
-              epsilon(atom.end, end);
-              epsilon(atom.end, atom.begin);
-            }
-          else
-            {
-              epsilon(atom.end, atom.begin);
-              epsilon(atom.end, end);
-            }
-          epsilon(pos, end);
-          pos = end;
-        }
-      // append maximum
-      else
-        for(; c < range.end; c++)
-          {
-            chain_t tmp = clone(atom);
-            if(lazy)
-              {
-                std::shared_ptr<state_t> begin = std::make_shared<state_t>();
-                // make sure the epsilon comes before the atom.
-                epsilon(begin, tmp.end);
-                merge_state(begin, tmp.begin);
-                tmp.begin = begin;
-              }
-            else
-              epsilon(tmp.begin, tmp.end);
-            merge_state(pos, tmp.begin);
-            pos = tmp.end;
-          }
-
-      result.end = pos;
-
-      return result;
+      range = syms.front().range;
+      syms.pop_front();
     }
-  return chain_t();
+  else if(syms.size() && syms.front().type == symbol::type_t::qmark)
+    {
+      range.begin = 0;
+      range.end = 1;
+      syms.pop_front();
+    }
+  else if(syms.size() && syms.front().type == symbol::type_t::star)
+    {
+      range.begin = 0;
+      range.infinite = true;
+      syms.pop_front();
+    }
+  else if(syms.size() && syms.front().type == symbol::type_t::plus)
+    {
+      range.begin = 1;
+      range.infinite = true;
+      syms.pop_front();
+    }
+
+  bool lazy = false;
+  if(syms.size() && syms.front().type == symbol::type_t::qmark)
+    {
+      lazy = true;
+      syms.pop_front();
+    }
+
+  // current chain position
+  std::shared_ptr<state_t> pos = result.begin;
+
+  // append minimum
+  unsigned int c = 0;
+  for(; c < range.begin; c++)
+    {
+      chain_t tmp = clone(atom);
+      merge_state(pos, tmp.begin);
+      pos = tmp.end;
+    }
+
+  // append infinity
+  if(range.infinite)
+    {
+      std::shared_ptr<state_t> end = std::make_shared<state_t>();
+      epsilon(pos, atom.begin);
+      if(lazy)
+        {
+          // skip first
+          epsilon(atom.end, end);
+          epsilon(atom.end, atom.begin);
+        }
+      else
+        {
+          // try first
+          epsilon(atom.end, atom.begin);
+          epsilon(atom.end, end);
+        }
+      epsilon(pos, end);
+      pos = end;
+    }
+  // append maximum
+  else
+    for(; c < range.end; c++)
+      {
+        chain_t tmp = clone(atom);
+        if(lazy)
+          {
+            std::shared_ptr<state_t> begin = std::make_shared<state_t>();
+            // skip first
+            epsilon(begin, tmp.end);
+            merge_state(begin, tmp.begin);
+            tmp.begin = begin;
+          }
+        else
+          // skip last
+          epsilon(tmp.begin, tmp.end);
+
+        merge_state(pos, tmp.begin);
+        pos = tmp.end;
+      }
+
+  result.end = pos;
+  return result;
 }
 
 qre::chain_t qre::parse_term(std::list<symbol> &syms)

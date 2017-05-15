@@ -31,8 +31,6 @@
 #include <type_traits>
 #include <vector>
 
-//#define DEBUG
-
 class qre
 {
 public:
@@ -54,14 +52,14 @@ public:
   };
 
   qre();
-  qre(const std::string &str);
+  qre(const std::string &regex); // contruct a regular expression
   qre(const qre &q);
   qre(qre &&q);
   qre &operator=(const qre &p);
   qre &operator=(qre &&p);
   ~qre();
   bool operator()(const std::string &str, match &result,
-                  match_flag flags = match_flag::none) const;
+                  match_flag flags = match_flag::none) const; // matching function
 
 private:
 
@@ -89,7 +87,7 @@ private:
     char32_t end;
 
     bool operator==(const char_range &r) const;
-    bool operator<(const char_range &r) const;
+    bool operator<(const char_range &r) const; // for std::set
   };
 
   // Tests --------------------------------------------------------------------
@@ -186,7 +184,7 @@ private:
 
   signed int id = 0; // current capture id
   std::vector<capture_t> captures; // list of active capture groups
-  bool nonstop = false;
+  bool nonstop = false; // keep backtracking in atomic groups
 
   chain_t parse_atom(std::list<symbol> &syms);
   chain_t parse_factor(std::list<symbol> &syms);
@@ -196,6 +194,7 @@ private:
   chain_t the_chain;
 };
 
+// make match_flag behave like a normal enumeration
 qre::match_flag operator|(const qre::match_flag &f1, const qre::match_flag &f2);
 qre::match_flag operator&(const qre::match_flag &f1, const qre::match_flag &f2);
 

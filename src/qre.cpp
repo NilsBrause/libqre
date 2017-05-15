@@ -22,20 +22,22 @@
 
 qre::qre()
 {
+  // initialise state chain
   the_chain.begin = std::make_shared<state_t>();
   the_chain.end = std::make_shared<state_t>();
   epsilon(the_chain.begin, the_chain.end);
 }
 
-qre::qre(const std::string &str)
+qre::qre(const std::string &regex)
   : id(0)
 {
-  std::list<symbol> syms = tokeniser(utf8toutf32(str));
+  std::list<symbol> syms = tokeniser(utf8toutf32(regex));
 #ifdef DEBUG
   std::cerr << "Found " << syms.size() << " tokens" << std::endl;
 #endif
   the_chain = parse_expression(syms);
 
+  // TODO: improve error reporting
   if(!the_chain)
     throw std::runtime_error("Expected expression.");
   if(syms.size() > 0)
@@ -66,11 +68,11 @@ qre &qre::operator=(qre &&q)
 
 qre::~qre()
 {
-  // already visited stated
+  // already visited states
   std::set<std::shared_ptr<state_t>> states;
 
   std::function<void(std::shared_ptr<state_t> state)> clear
-    = [&] (std::shared_ptr<state_t> state)
+    = [&clear, &states] (std::shared_ptr<state_t> state)
     {
       // state already visited?
       auto it = states.find(state);

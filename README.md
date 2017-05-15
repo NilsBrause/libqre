@@ -1,4 +1,4 @@
-# Q Regular Expressions Library (`libbqre`)
+# Q Regular Expressions Library (`libqre`)
 
 libqre is a regular expressions library written in modern C++11 with an unique feature set including partial matches and multiple captures.
 
@@ -64,22 +64,23 @@ e.g. `abc|def`
 - Capturing: e.g. `(abc)`
 - Non-capturing: e.g. `(?:abc)`
 - Multiple captures: e.g. `(a.c)+`
-- Backreferenced for multiple captures: `\k'n,m'`, `\k<n,m>`, `\k{n,m}`, `\g'n,m'`, `\g<n,m>`, `\g{n,m}` with n != 0 and m != 0
-- Normal backrefernces: `\k'n'`, `\k<n>`, `\k{n}`, `\g'n'`, `\g<n>`, `\g{n}` with n != 0 and m defaulting to -1
-- Short backreferences: `\1` to `\9` and `\-1` to `\-9` with m defaulting to -1
+- Backrefernces: `\k'n'`, `\k<n>`, `\k{n}`, `\g'n'`, `\g<n>`, `\g{n}` referring to the nth capture group (n != 0)
+- Short backreferences: `\1` to `\9` and `\-1` to `\-9`
+- Backreferenced for multiple captures: `\k'n,m'`, `\k<n,m>`, `\k{n,m}`, `\g'n,m'`, `\g<n,m>`, `\g{n,m}` accessing the mth capture (m > 0)
 - Forwardreferences
 - Named capture groups: `(?'name'.*)`, `(?<name>.*)`
-- Backreferences for named capture groups: Replace `n` with the name in above examples.
+- Backreferences for named capture groups: Replace `n` with the capture group name
 
 See example.cpp for more examples.
 
 ## Not supported
 
-There is still a lot stuff, that is not supported.
+There is still a lot stuff that is not supported.
 Some stuff will never be supported:
 
  - Literal `\` in a character class. Backslash always escapes.
  - Possesive quantifiers. Use atomic groups instead.
  - Unicode aside from simple code points.
+ - Predefined character classes.
  - Match attempt anchors.
  - Recursion and subroutines.
